@@ -3,29 +3,73 @@ import { redirect } from "next/navigation";
 import { getCurrentWorkspace } from "@/lib/workspace";
 import { getWorkspaceCategories } from "@/lib/data/categories";
 import { getOverviewData } from "@/lib/data/overview";
+import { getT } from "@/lib/i18n/server";
 import { RecentRow } from "@/components/overview/RecentRow";
+
+function StatTile({
+  label,
+  value,
+  sub,
+  color,
+  strong,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className={`ov-stat${strong ? " ov-stat-strong" : ""}`}>
+      <div className="kicker" style={{ marginBottom: 4 }}>
+        {label}
+      </div>
+      <div className="ov-stat-num" style={{ color: color ?? "inherit" }}>
+        {value}
+      </div>
+      {sub && <div className="ov-stat-sub">{sub}</div>}
+    </div>
+  );
+}
 
 export default async function OverviewPage() {
   const current = await getCurrentWorkspace();
   if (!current) redirect("/welcome");
   const { workspace } = current;
 
+  const translator = await getT();
+  const { t } = translator;
+
   const categories = await getWorkspaceCategories(workspace.id);
-  const d = await getOverviewData(workspace.id, workspace.monthly_budget, workspace.base_currency, categories);
+  const d = await getOverviewData(workspace.id, workspace.monthly_budget, workspace.base_currency, categories, translator);
 
   return (
     <div className="ov-wrap">
       <div className="ov-hero-grid">
         <div>
-          <div className="kicker">{d.monthLabel} · spent so far</div>
-          <div className="ov-hero-num">{d.spentWhole}</div>
+          <div className="kicker">{t("ov.balance")}</div>
+          <div className="ov-hero-num" style={{ color: d.balanceColor, marginBottom: 6 }}>
+            {d.balance}
+          </div>
+          <div style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>{t("ov.balanceSub")}</div>
+
+          <div className="kicker" style={{ marginTop: 28 }}>
+            {d.monthLabel}
+          </div>
+          <div className="ov-stats" style={{ marginTop: 8 }}>
+            <StatTile label={t("ov.income")} value={d.income} color="var(--color-accent-700)" />
+            <StatTile label={t("ov.net")} value={d.net} sub={t("ov.netSub")} color={d.netColor} strong />
+            <StatTile label={t("sum.spent")} value={d.spent} color="#b45309" />
+          </div>
+
           <div
             style={{
               height: 8,
               background: "var(--color-surface)",
               borderRadius: 2,
               overflow: "hidden",
-              maxWidth: 420,
+              maxWidth: 560,
+              marginTop: 18,
             }}
           >
             <div
@@ -40,16 +84,10 @@ export default async function OverviewPage() {
           <div className="ov-hero-row">
             <span>{d.budgetLine}</span>
             <span className={`tag ${d.deltaClass}`}>{d.deltaText}</span>
-            <span>
-              Income <strong style={{ color: "var(--color-accent-700)" }}>{d.income}</strong>
-            </span>
-            <span>
-              Net <strong style={{ color: d.netColor }}>{d.net}</strong>
-            </span>
           </div>
         </div>
         <div>
-          <div className="kicker">Last six months</div>
+          <div className="kicker">{t("ov.lastSix")}</div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170 }}>
             {d.sixMonthBars.map((b) => (
               <div
@@ -85,11 +123,11 @@ export default async function OverviewPage() {
 
       <div className="ov-two-col">
         <div>
-          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>By category</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>{t("ov.byCategory")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {d.categoryRows.length === 0 ? (
               <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>
-                No categories yet — add one in Settings.
+                {t("ov.noCategories")}
               </p>
             ) : (
               d.categoryRows.map((c) => (
@@ -123,11 +161,11 @@ export default async function OverviewPage() {
         </div>
 
         <div>
-          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>Top merchants</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>{t("ov.topMerchants")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40 }}>
             {d.topMerchants.length === 0 ? (
               <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>
-                No purchases logged yet this month.
+                {t("ov.noPurchasesMonth")}
               </p>
             ) : (
               d.topMerchants.map((m) => (
@@ -141,9 +179,9 @@ export default async function OverviewPage() {
             )}
           </div>
 
-          <h3 style={{ fontSize: 22, margin: "0 0 4px" }}>Coming up in {d.nextMonthLabel}</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 4px" }}>{t("ov.comingUp", { month: d.nextMonthLabel })}</h3>
           <p style={{ fontSize: 14, color: "var(--color-neutral-700)", margin: "0 0 14px" }}>
-            {d.upcoming.length === 0 ? "Nothing recurring yet." : `${d.upcomingTotal} in recurring costs`}
+            {d.upcoming.length === 0 ? t("ov.nothingRecurring") : t("ov.recurringCosts", { amount: d.upcomingTotal })}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {d.upcoming.map((u) => (
@@ -173,15 +211,15 @@ export default async function OverviewPage() {
 
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-          <h3 style={{ fontSize: 22, margin: 0 }}>Recent</h3>
+          <h3 style={{ fontSize: 22, margin: 0 }}>{t("ov.recent")}</h3>
           <Link href="/activity" className="btn btn-ghost" style={{ minHeight: 44 }}>
-            All costs ›
+            {t("ov.allCosts")}
           </Link>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {d.recent.length === 0 ? (
             <p className="text-muted" style={{ fontSize: 15, padding: "24px 8px" }}>
-              No costs logged yet.
+              {t("ov.noCosts")}
             </p>
           ) : (
             d.recent.map((r) => (

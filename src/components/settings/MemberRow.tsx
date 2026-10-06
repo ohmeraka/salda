@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { changeMemberRole, removeMember } from "@/app/actions/members";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
 import type { MemberRow as MemberRowData } from "@/lib/data/members";
 import type { Role } from "@/types/database";
 
 export function MemberRow({ member, canManage }: { member: MemberRowData; canManage: boolean }) {
   const { show } = useToast();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
 
   async function handleRoleChange(role: Role) {
@@ -18,7 +20,7 @@ export function MemberRow({ member, canManage }: { member: MemberRowData; canMan
       show(result.error);
       return;
     }
-    show("Role updated");
+    show(t("toast.roleUpdated"));
   }
 
   async function handleRemove() {
@@ -29,7 +31,7 @@ export function MemberRow({ member, canManage }: { member: MemberRowData; canMan
       show(result.error);
       return;
     }
-    show("Member removed");
+    show(t("toast.memberRemoved"));
   }
 
   const canManageThisRow = canManage && !member.isSelf;
@@ -48,7 +50,7 @@ export function MemberRow({ member, canManage }: { member: MemberRowData; canMan
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 16 }}>
           {member.displayName}
-          {member.isSelf ? " (you)" : ""}
+          {member.isSelf ? t("mem.you") : ""}
         </div>
         {member.email && <div style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>{member.email}</div>}
       </div>
@@ -60,14 +62,14 @@ export function MemberRow({ member, canManage }: { member: MemberRowData; canMan
             value={member.role}
             onChange={(e) => handleRoleChange(e.target.value as Role)}
             disabled={busy}
-            aria-label={`Role for ${member.displayName}`}
+            aria-label={t("mem.roleFor", { name: member.displayName })}
           >
-            <option value="member">Member</option>
-            <option value="owner">Owner</option>
+            <option value="member">{t("role.member")}</option>
+            <option value="owner">{t("role.owner")}</option>
           </select>
         ) : (
           <span className={`tag ${member.role === "owner" ? "tag-accent" : "tag-neutral"}`}>
-            {member.role === "owner" ? "Owner" : "Member"}
+            {member.role === "owner" ? t("role.owner") : t("role.member")}
           </span>
         )}
         {canManageThisRow && (
@@ -78,7 +80,7 @@ export function MemberRow({ member, canManage }: { member: MemberRowData; canMan
             onClick={handleRemove}
             disabled={busy}
           >
-            Remove
+            {t("mem.remove")}
           </button>
         )}
       </div>

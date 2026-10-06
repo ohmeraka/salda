@@ -1,16 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n";
 import type { SummaryRange } from "@/lib/data/summary";
 
-const RANGES: { value: SummaryRange; label: string }[] = [
-  { value: "month", label: "Month" },
-  { value: "quarter", label: "3 months" },
-  { value: "half", label: "6 months" },
+const RANGES: { value: SummaryRange; label: MessageKey }[] = [
+  { value: "month", label: "sum.month" },
+  { value: "quarter", label: "sum.threeMonths" },
+  { value: "half", label: "sum.sixMonths" },
 ];
 
 export function SummaryRangeControl({ range }: { range: SummaryRange }) {
   const router = useRouter();
+  const { t } = useT();
 
   return (
     <div className="seg">
@@ -22,7 +25,7 @@ export function SummaryRangeControl({ range }: { range: SummaryRange }) {
             checked={range === r.value}
             onChange={() => router.push(`/summary?range=${r.value}`)}
           />
-          {r.label}
+          {t(r.label)}
         </label>
       ))}
     </div>

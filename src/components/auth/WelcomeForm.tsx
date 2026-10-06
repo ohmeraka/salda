@@ -4,11 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signUp } from "@/app/actions/auth";
 import { ProviderIcon, type ProviderName } from "@/components/icons";
+import { useT } from "@/lib/i18n/client";
 
 const PROVIDERS: ProviderName[] = ["Google", "Apple", "Microsoft", "GitHub"];
 
 export function WelcomeForm() {
   const router = useRouter();
+  const { t } = useT();
   const [mode, setMode] = useState<"signup" | "signin">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,15 +23,15 @@ export function WelcomeForm() {
     setError("");
 
     if (mode === "signup" && !name.trim()) {
-      setError("Name is required.");
+      setError(t("err.nameRequired"));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Enter a valid email address.");
+      setError(t("err.emailInvalid"));
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("err.passwordShort"));
       return;
     }
 
@@ -46,7 +48,11 @@ export function WelcomeForm() {
         setError(result.error);
         return;
       }
-      router.push(`/confirm?email=${encodeURIComponent(email)}`);
+      if (result.confirmed) {
+        router.push("/overview");
+      } else {
+        router.push(`/confirm?email=${encodeURIComponent(email)}`);
+      }
     } else {
       const result = await signIn(formData);
       setBusy(false);
@@ -62,11 +68,11 @@ export function WelcomeForm() {
       <div className="seg" style={{ alignSelf: "flex-start" }}>
         <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
           <input type="radio" name="authmode" checked={mode === "signup"} onChange={() => setMode("signup")} />
-          Sign up
+          {t("welcome.signUp")}
         </label>
         <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
           <input type="radio" name="authmode" checked={mode === "signin"} onChange={() => setMode("signin")} />
-          Sign in
+          {t("welcome.signIn")}
         </label>
       </div>
 
@@ -77,65 +83,64 @@ export function WelcomeForm() {
             type="button"
             className="btn btn-secondary"
             disabled
-            title="Coming soon — needs a registered OAuth app"
+            title={t("welcome.soonTitle")}
             style={{ justifyContent: "flex-start", gap: 10, fontSize: 15, position: "relative" }}
           >
             <ProviderIcon provider={provider} />
             {provider}
             <span className="tag tag-neutral" style={{ marginLeft: "auto" }}>
-              Soon
+              {t("common.soon")}
             </span>
           </button>
         ))}
       </div>
 
-      <div style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>or with email</div>
+      <div style={{ fontSize: 13, color: "var(--color-neutral-700)" }}>{t("welcome.orWithEmail")}</div>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {mode === "signup" && (
           <div className="field">
-            <label>Name</label>
+            <label>{t("welcome.name")}</label>
             <input
               className="input"
               type="text"
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Alex Morgan"
+              placeholder={t("welcome.namePlaceholder")}
             />
           </div>
         )}
         <div className="field">
-          <label>Email</label>
+          <label>{t("welcome.email")}</label>
           <input
             className="input"
             type="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("welcome.emailPlaceholder")}
           />
         </div>
         <div className="field">
-          <label>Password</label>
+          <label>{t("welcome.password")}</label>
           <input
             className="input"
             type="password"
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 8 characters"
+            placeholder={t("welcome.passwordPlaceholder")}
           />
         </div>
         {error && <div style={{ fontSize: 14, color: "var(--color-accent-2-700)" }}>{error}</div>}
         <button type="submit" className="btn btn-primary" style={{ fontSize: 16 }} disabled={busy}>
-          {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+          {busy ? t("welcome.wait") : mode === "signup" ? t("welcome.createAccount") : t("welcome.signIn")}
         </button>
       </form>
 
       <p style={{ fontSize: 12, color: "var(--color-neutral-700)", margin: 0, maxWidth: "30em" }}>
-        By continuing you agree to the terms and privacy policy. We email a confirmation code to verify your
-        address.
+        {t("welcome.terms")}
       </p>
     </div>
   );

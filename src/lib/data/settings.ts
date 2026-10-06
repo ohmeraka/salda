@@ -1,7 +1,8 @@
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/currency";
 import { getMonthRange, toDateParam } from "@/lib/periods";
+import { fmtDate, type Translator } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/i18n/categories";
 import type { Category, CurrencyCode } from "@/types/database";
 
 export interface CategorySetting {
@@ -15,7 +16,8 @@ export interface CategorySetting {
 export async function getCategorySettings(
   workspaceId: string,
   categories: Category[],
-  currency: CurrencyCode
+  currency: CurrencyCode,
+  { t, locale }: Translator
 ): Promise<CategorySetting[]> {
   const supabase = await createClient();
   const { start, end } = getMonthRange(new Date());
@@ -37,12 +39,15 @@ export async function getCategorySettings(
   }
   const usedIds = new Set((usedRows ?? []).map((r) => r.category_id));
 
-  const monthName = format(new Date(), "MMMM");
+  const monthName = fmtDate(new Date(), "MMMM", locale);
   return categories.map((c) => ({
     id: c.id,
-    name: c.name,
+    name: categoryLabel(c.name, locale),
     budgetValue: c.monthly_budget,
-    spentLabel: `${formatCurrency(spendByCategory.get(c.id) ?? 0, currency)} spent in ${monthName}`,
+    spentLabel: t("set.spentIn", {
+      amount: formatCurrency(spendByCategory.get(c.id) ?? 0, currency, 2, locale),
+      month: monthName,
+    }),
     locked: usedIds.has(c.id),
   }));
 }

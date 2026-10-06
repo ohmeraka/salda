@@ -1,86 +1,68 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { WORKSPACE_COOKIE } from "@/lib/workspace";
+import { ensureWorkspace } from "@/lib/ensure-workspace";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n";
 
-/**
- * Ensures the signed-in user belongs to at least one workspace. The Salda
- * design has no separate "create your workspace" screen — confirming your
- * email lands you straight on Overview — so the first workspace is
- * created silently here, named after the account.
- */
-async function ensureWorkspace(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, displayName: string) {
-  const { data: existing } = await supabase
-    .from("workspace_members")
-    .select("workspace_id")
-    .eq("user_id", userId)
-    .limit(1);
-
-  if (existing && existing.length > 0) return;
-
-  const { data: workspace, error: workspaceError } = await supabase
-    .from("workspaces")
-    .insert({ name: `${displayName}'s Salda`, created_by: userId, base_currency: "BAM" })
-    .select()
-    .single();
-
-  if (workspaceError || !workspace) return;
-
-  await supabase.from("workspace_members").insert({ workspace_id: workspace.id, user_id: userId, role: "owner" });
-
-  // A handful of sensible starting categories so Overview/Activity aren't empty.
-  const defaults = [
-    { name: "Groceries", monthly_budget: null },
-    { name: "Utilities", monthly_budget: null },
-    { name: "Rent/Mortgage", monthly_budget: null },
-    { name: "Transport", monthly_budget: null },
-    { name: "Dining out", monthly_budget: null },
-    { name: "Other", monthly_budget: null },
-  ];
-  await supabase.from("categories").insert(
-    defaults.map((c) => ({ ...c, workspace_id: workspace.id, created_by: userId }))
-  );
-
-  const cookieStore = await cookies();
-  cookieStore.set(WORKSPACE_COOKIE, workspace.id, { path: "/", maxAge: 60 * 60 * 24 * 365 });
+/** Swaps Supabase's few well-known English auth errors for translated ones; anything else passes through. */
+function authError(t: Translator["t"], message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return t("err.invalidLogin");
+  if (m.includes("user already registered")) return t("err.userExists");
+  if (m.includes("email not confirmed")) return t("err.emailNotConfirmed");
+  return message;
 }
 
 export async function signUp(
   formData: FormData
-): Promise<{ error: string } | { success: true; email: string }> {
+): Promise<{ error: string } | { success: true; email: string; confirmed: boolean }> {
+  const { t } = await getT();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!name) return { error: "Name is required." };
-  if (!email) return { error: "Email is required." };
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (!name) return { error: t("err.nameRequired") };
+  if (!email) return { error: t("err.emailRequired") };
+  if (password.length < 8) return { error: t("err.passwordShort") };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { display_name: name } },
   });
 
-  if (error) return { error: error.message };
-  return { success: true, email };
+  if (error) return { error: authError(t, error.message) };
+
+  // If this Supabase project has "Confirm email" turned off, signUp()
+  // returns an active session immediately — no code was ever sent, so
+  // skip the confirm screen and get the account ready right away.
+  if (data.session && data.user) {
+    await supabase.rpc("accept_pending_invites");
+    const setupError = await ensureWorkspace(supabase, data.user.id, data.user.user_metadata?.display_name ?? "My");
+    if (setupError) return { error: setupError };
+    return { success: true, email, confirmed: true };
+  }
+
+  return { success: true, email, confirmed: false };
 }
 
 export async function signIn(formData: FormData): Promise<{ error: string } | never> {
+  const { t } = await getT();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authError(t, error.message) };
 
   if (data.user) {
     await supabase.rpc("accept_pending_invites");
-    await ensureWorkspace(supabase, data.user.id, data.user.user_metadata?.display_name ?? "My");
+    const setupError = await ensureWorkspace(supabase, data.user.id, data.user.user_metadata?.display_name ?? "My");
+    if (setupError) return { error: setupError };
   }
 
   redirect("/overview");
@@ -90,14 +72,16 @@ export async function confirmEmail(
   email: string,
   token: string
 ): Promise<{ error: string } | { success: true }> {
+  const { t } = await getT();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authError(t, error.message) };
 
   if (data.user) {
     await supabase.rpc("accept_pending_invites");
-    await ensureWorkspace(supabase, data.user.id, data.user.user_metadata?.display_name ?? "My");
+    const setupError = await ensureWorkspace(supabase, data.user.id, data.user.user_metadata?.display_name ?? "My");
+    if (setupError) return { error: setupError };
   }
 
   return { success: true };

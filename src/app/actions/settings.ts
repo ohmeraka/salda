@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspace } from "@/lib/workspace";
+import { getT } from "@/lib/i18n/server";
 
 type ActionResult = { error: string } | { success: true };
 
@@ -14,11 +15,12 @@ function parseBudget(raw: string): number | null {
 }
 
 export async function updateWorkspaceBudget(formData: FormData): Promise<ActionResult> {
+  const { t } = await getT();
   const current = await getCurrentWorkspace();
-  if (!current) return { error: "No workspace found." };
+  if (!current) return { error: t("err.noWorkspace") };
 
   const value = parseBudget(String(formData.get("budget") ?? ""));
-  if (value == null) return { error: "Enter a budget above 0." };
+  if (value == null) return { error: t("err.budget") };
 
   const supabase = await createClient();
   const { error } = await supabase.from("workspaces").update({ monthly_budget: value }).eq("id", current.workspace.id);
@@ -30,8 +32,9 @@ export async function updateWorkspaceBudget(formData: FormData): Promise<ActionR
 }
 
 export async function addCategory(formData: FormData): Promise<ActionResult> {
+  const { t } = await getT();
   const current = await getCurrentWorkspace();
-  if (!current) return { error: "No workspace found." };
+  if (!current) return { error: t("err.noWorkspace") };
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "" };
@@ -40,7 +43,7 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You've been signed out. Please sign in again." };
+  if (!user) return { error: t("err.signedOut") };
 
   const { error } = await supabase.from("categories").insert({
     workspace_id: current.workspace.id,
@@ -49,7 +52,7 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
   });
 
   if (error) {
-    if (error.code === "23505") return { error: "That category already exists." };
+    if (error.code === "23505") return { error: t("err.categoryExists") };
     return { error: error.message };
   }
 
@@ -76,6 +79,7 @@ export async function updateCategoryBudget(categoryId: string, formData: FormDat
 }
 
 export async function deleteCategory(categoryId: string): Promise<ActionResult> {
+  const { t } = await getT();
   const supabase = await createClient();
 
   const { count } = await supabase
@@ -83,7 +87,7 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
     .select("id", { count: "exact", head: true })
     .eq("category_id", categoryId);
 
-  if (count && count > 0) return { error: "Only unused categories can be removed." };
+  if (count && count > 0) return { error: t("err.categoryInUse") };
 
   const { error } = await supabase.from("categories").delete().eq("id", categoryId);
   if (error) return { error: error.message };

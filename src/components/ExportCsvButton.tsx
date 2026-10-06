@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { exportTransactionsCsv } from "@/app/actions/export";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
 
-export function ExportCsvButton({ label = "Export all costs as CSV" }: { label?: string }) {
+export function ExportCsvButton({ label }: { label?: string }) {
   const { show } = useToast();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
 
   async function handleClick() {
@@ -25,12 +27,12 @@ export function ExportCsvButton({ label = "Export all costs as CSV" }: { label?:
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    show("CSV exported");
+    show(t("toast.csv"));
   }
 
   return (
     <button type="button" className="btn btn-secondary" style={{ minHeight: 44 }} onClick={handleClick} disabled={busy}>
-      {busy ? "Exporting…" : label}
+      {busy ? t("export.busy") : (label ?? t("sum.export"))}
     </button>
   );
 }

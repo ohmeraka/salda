@@ -3,10 +3,12 @@
 import { useState, type FormEvent } from "react";
 import { inviteMember } from "@/app/actions/members";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
 import type { Role } from "@/types/database";
 
 export function InviteForm() {
   const { show } = useToast();
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("member");
   const [error, setError] = useState("");
@@ -26,7 +28,7 @@ export function InviteForm() {
       return;
     }
     setEmail("");
-    show("Invite sent");
+    show(t("toast.inviteSent"));
   }
 
   return (
@@ -36,18 +38,18 @@ export function InviteForm() {
           className="input"
           style={{ minHeight: 44, fontSize: 16, flex: "1 1 220px" }}
           type="email"
-          placeholder="their@email.com"
+          placeholder={t("mem.emailPh")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <div className="seg">
           <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
             <input type="radio" name="invrole" checked={role === "member"} onChange={() => setRole("member")} />
-            Member
+            {t("role.member")}
           </label>
           <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
             <input type="radio" name="invrole" checked={role === "owner"} onChange={() => setRole("owner")} />
-            Owner
+            {t("role.owner")}
           </label>
         </div>
       </div>
@@ -58,7 +60,7 @@ export function InviteForm() {
         style={{ minHeight: 44, alignSelf: "flex-start", padding: "0 24px" }}
         disabled={busy}
       >
-        {busy ? "Sending…" : "Send invite"}
+        {busy ? t("mem.sending") : t("mem.sendInvite")}
       </button>
     </form>
   );

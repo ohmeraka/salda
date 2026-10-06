@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { addCategory } from "@/app/actions/settings";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
 
 export function AddCategoryForm() {
   const { show } = useToast();
+  const { t } = useT();
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -19,11 +21,11 @@ export function AddCategoryForm() {
     const result = await addCategory(fd);
     setBusy(false);
     if ("error" in result) {
-      setError(result.error || "Couldn't add that category.");
+      setError(result.error || t("err.categoryFail"));
       return;
     }
     setName("");
-    show("Category added");
+    show(t("toast.categoryAdded"));
   }
 
   return (
@@ -32,7 +34,7 @@ export function AddCategoryForm() {
         <input
           className="input"
           style={{ minHeight: 44, fontSize: 16 }}
-          placeholder="New category"
+          placeholder={t("set.newCategory")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -43,7 +45,7 @@ export function AddCategoryForm() {
           onClick={handleAdd}
           disabled={busy}
         >
-          Add
+          {t("set.add")}
         </button>
       </div>
       {error && <div style={{ fontSize: 14, color: "var(--color-accent-2-700)", marginTop: 4 }}>{error}</div>}

@@ -1,4 +1,5 @@
 import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import { fmtDate, type Locale } from "@/lib/i18n";
 
 /** "yyyy-MM" — the month-selector value used across Overview/Activity/Summary. */
 export function toMonthParam(date: Date) {
@@ -16,8 +17,8 @@ export function getMonthRange(monthDate: Date) {
   return { start: startOfMonth(monthDate), end: endOfMonth(monthDate) };
 }
 
-export function formatMonthLabel(monthDate: Date) {
-  return format(monthDate, "MMMM yyyy");
+export function formatMonthLabel(monthDate: Date, locale: Locale = "en") {
+  return fmtDate(monthDate, "MMMM yyyy", locale);
 }
 
 export function shiftMonth(monthDate: Date, direction: 1 | -1) {

@@ -43,6 +43,10 @@
   --color-accent-2-800: #790e3d;
   --color-accent-2-900: #4b1528;
 
+  /* Balance: plain green / red so positive vs negative reads at a glance. */
+  --color-positive: #1a7f37;
+  --color-negative: #c62828;
+
   /* Client override: Arial everywhere (design system default is a serif heading font). */
   --font-heading: Arial, Helvetica, sans-serif;
   --font-heading-weight: 700;
@@ -535,6 +539,52 @@ textarea.input {
   gap: 40px 64px;
   align-items: start;
 }
+/* Income / Net / Balance tiles under the hero number. */
+.ov-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+  max-width: 560px;
+}
+.ov-stat {
+  padding: 12px 12px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 2px;
+  min-width: 0;
+}
+.ov-stat-strong {
+  background: var(--color-surface);
+  border-color: var(--color-neutral-300);
+}
+.ov-stat-num {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ov-stat-strong .ov-stat-num {
+  font-weight: 700;
+}
+.ov-stat-sub {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--color-neutral-700);
+}
+@media (min-width: 900px) {
+  .ov-stat {
+    padding: 14px 16px 12px;
+  }
+  .ov-stat-num {
+    font-size: 26px;
+  }
+  .ov-stat-sub {
+    font-size: 12px;
+  }
+}
 @media (min-width: 900px) {
   .ov-wrap {
     gap: 56px;
@@ -547,9 +597,7 @@ textarea.input {
     font-size: 96px;
   }
   .ov-hero-row {
-    flex-wrap: nowrap;
-    font-size: 13px;
-    white-space: nowrap;
+    font-size: 14px;
   }
   .ov-two-col {
     gap: 56px 64px;

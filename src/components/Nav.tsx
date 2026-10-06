@@ -6,14 +6,18 @@ import { Logo } from "@/components/Logo";
 import { NavGlyph } from "@/components/icons";
 import { useEditor } from "@/lib/editor-context";
 import { useWorkspace } from "@/lib/workspace-context";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n";
 
-const TABS = [
-  { href: "/overview", icon: "home" as const, label: "Overview" },
-  { href: "/activity", icon: "costs" as const, label: "Activity" },
+type Tab = { href: string; icon: "home" | "costs" | "summary" | "settings"; label: MessageKey };
+
+const TABS: Tab[] = [
+  { href: "/overview", icon: "home", label: "nav.overview" },
+  { href: "/activity", icon: "costs", label: "nav.activity" },
 ];
-const TABS_AFTER_ADD = [
-  { href: "/summary", icon: "summary" as const, label: "Summary" },
-  { href: "/settings", icon: "settings" as const, label: "Settings" },
+const TABS_AFTER_ADD: Tab[] = [
+  { href: "/summary", icon: "summary", label: "nav.summary" },
+  { href: "/settings", icon: "settings", label: "nav.settings" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -21,6 +25,7 @@ function isActive(pathname: string, href: string) {
 }
 
 export function MobileNav() {
+  const { t } = useT();
   const pathname = usePathname();
   const { openAdd } = useEditor();
 
@@ -44,7 +49,7 @@ export function MobileNav() {
       ))}
       <button
         onClick={openAdd}
-        aria-label="Add"
+        aria-label={t("nav.add")}
         style={{
           width: 58,
           height: 58,
@@ -70,13 +75,8 @@ export function MobileNav() {
   );
 }
 
-function TabLink({
-  tab,
-  active,
-}: {
-  tab: { href: string; icon: "home" | "costs" | "summary" | "settings"; label: string };
-  active: boolean;
-}) {
+function TabLink({ tab, active }: { tab: Tab; active: boolean }) {
+  const { t } = useT();
   return (
     <Link
       href={tab.href}
@@ -94,12 +94,13 @@ function TabLink({
       }}
     >
       <NavGlyph name={tab.icon} size={22} />
-      {tab.label}
+      {t(tab.label)}
     </Link>
   );
 }
 
 export function DesktopNav() {
+  const { t } = useT();
   const pathname = usePathname();
   const { openAdd } = useEditor();
   const { displayName } = useWorkspace();
@@ -124,15 +125,15 @@ export function DesktopNav() {
 
       <button onClick={openAdd} className="btn btn-primary btn-block" style={{ marginBottom: 16, fontSize: 16 }}>
         <NavGlyph name="add" size={20} />
-        Add
+        {t("nav.add")}
       </button>
 
-      {allTabs.map((t) => {
-        const active = isActive(pathname, t.href);
+      {allTabs.map((tab) => {
+        const active = isActive(pathname, tab.href);
         return (
           <Link
-            key={t.href}
-            href={t.href}
+            key={tab.href}
+            href={tab.href}
             style={{
               display: "flex",
               alignItems: "center",
@@ -146,14 +147,14 @@ export function DesktopNav() {
               minHeight: 44,
             }}
           >
-            <NavGlyph name={t.icon} size={22} />
-            {t.label}
+            <NavGlyph name={tab.icon} size={22} />
+            {t(tab.label)}
           </Link>
         );
       })}
 
       <div style={{ marginTop: "auto", padding: "0 12px", fontSize: 13, color: "var(--color-neutral-700)" }}>
-        Signed in as
+        {t("nav.signedInAs")}
         <br />
         <span style={{ color: "var(--color-text)", fontSize: 15 }}>{displayName}</span>
       </div>

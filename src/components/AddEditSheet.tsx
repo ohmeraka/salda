@@ -4,21 +4,23 @@ import { useEditor } from "@/lib/editor-context";
 import { CloseIcon } from "@/components/icons";
 import { ChooseStep } from "@/components/editor/ChooseStep";
 import { FormStep } from "@/components/editor/FormStep";
+import { useT } from "@/lib/i18n/client";
 
 export function AddEditSheet() {
   const { state, close } = useEditor();
+  const { t } = useT();
   if (!state.open) return null;
 
   const title =
     state.step === "choose"
-      ? "Add"
+      ? t("ed.add")
       : state.editing
         ? state.type === "income"
-          ? "Edit income"
-          : "Edit cost"
+          ? t("ed.editIncome")
+          : t("ed.editCost")
         : state.type === "income"
-          ? "New income"
-          : "New cost";
+          ? t("ed.newIncome")
+          : t("ed.newCost");
 
   return (
     <div className="ed-overlay">
@@ -38,7 +40,7 @@ export function AddEditSheet() {
             className="btn btn-ghost btn-icon"
             style={{ width: 44, height: 44 }}
             onClick={close}
-            aria-label="Close"
+            aria-label={t("ed.close")}
           >
             <CloseIcon />
           </button>

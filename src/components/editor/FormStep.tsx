@@ -4,20 +4,23 @@ import { useState } from "react";
 import { useEditor } from "@/lib/editor-context";
 import { useWorkspace } from "@/lib/workspace-context";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
+import type { MessageKey } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/i18n/categories";
 import { createTransaction, deleteTransaction, updateTransaction } from "@/app/actions/transactions";
 import { getExchangeRate } from "@/app/actions/fx";
 import { CURRENCIES, CURRENCY_SYMBOLS, formatCurrency } from "@/lib/currency";
 import { toDateParam } from "@/lib/periods";
 import type { CurrencyCode, IncomeKind, PaymentMethod, TransactionType, TransactionWithCategory } from "@/types/database";
 
-const INCOME_KINDS: { value: IncomeKind; label: string }[] = [
-  { value: "salary", label: "Salary" },
-  { value: "additional", label: "Additional income" },
+const INCOME_KINDS: { value: IncomeKind; label: MessageKey }[] = [
+  { value: "salary", label: "incomeKind.salary" },
+  { value: "additional", label: "incomeKind.additional" },
 ];
-const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: "card", label: "Card" },
-  { value: "cash", label: "Cash" },
-  { value: "transfer", label: "Transfer" },
+const PAYMENT_METHODS: { value: PaymentMethod; label: MessageKey }[] = [
+  { value: "card", label: "payment.card" },
+  { value: "cash", label: "payment.cash" },
+  { value: "transfer", label: "payment.transfer" },
 ];
 
 export function FormStep({
@@ -32,6 +35,7 @@ export function FormStep({
   const { close } = useEditor();
   const { categories, workspace } = useWorkspace();
   const { show: showToast } = useToast();
+  const { t, locale } = useT();
 
   const [type, setType] = useState<TransactionType>(editing?.type ?? initialType);
   const [amount, setAmount] = useState(() =>
@@ -80,11 +84,11 @@ export function FormStep({
 
   function validate(): boolean {
     const errs: typeof fieldErrors = {};
-    if (!(amountNum > 0)) errs.amount = "Enter an amount above 0";
+    if (!(amountNum > 0)) errs.amount = t("err.amount");
     if (!merchant.trim()) {
-      errs.merchant = isIncome ? "Add a source, e.g. your employer" : "Add a merchant or short description";
+      errs.merchant = isIncome ? t("err.sourceReq") : t("err.merchantReq");
     }
-    if (!date) errs.date = "Pick a date";
+    if (!date) errs.date = t("err.date");
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -93,7 +97,7 @@ export function FormStep({
     setFormError("");
     if (!validate()) return;
     if (foreignCurrency && !(rateNum > 0)) {
-      setFormError(`Enter the exchange rate (1 ${currency} = ? ${workspace.base_currency})`);
+      setFormError(t("err.rateReq", { cur: currency, base: workspace.base_currency }));
       return;
     }
 
@@ -140,7 +144,7 @@ export function FormStep({
   }
 
   const convertedPreview = hasConversion
-    ? `≈ ${formatCurrency(amountNum * rateNum, workspace.base_currency)} · 1 ${currency} = ${rateNum.toFixed(2)} ${workspace.base_currency}`
+    ? `≈ ${formatCurrency(amountNum * rateNum, workspace.base_currency, 2, locale)} · 1 ${currency} = ${rateNum.toFixed(2)} ${workspace.base_currency}`
     : "";
 
   return (
@@ -150,11 +154,11 @@ export function FormStep({
           <div className="seg" style={{ marginBottom: 18 }}>
             <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
               <input type="radio" name="entrytype" checked={type === "cost"} onChange={() => setType("cost")} />
-              Cost
+              {t("common.cost")}
             </label>
             <label className="seg-opt" style={{ whiteSpace: "nowrap" }}>
               <input type="radio" name="entrytype" checked={type === "income"} onChange={() => setType("income")} />
-              Income
+              {t("common.income")}
             </label>
           </div>
         )}
@@ -167,7 +171,7 @@ export function FormStep({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            aria-label="Amount"
+            aria-label={t("form.amount")}
           />
         </div>
         {fieldErrors.amount && (
@@ -180,7 +184,7 @@ export function FormStep({
             style={{ width: "auto", minHeight: 44, fontSize: 15 }}
             value={currency}
             onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
-            aria-label="Currency"
+            aria-label={t("form.currency")}
           >
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>
@@ -197,8 +201,8 @@ export function FormStep({
                 value={rateLoading ? "…" : fxRate}
                 onChange={(e) => setFxRate(e.target.value)}
                 disabled={rateLoading}
-                placeholder={`1 ${currency} = ?`}
-                aria-label={`Exchange rate, 1 ${currency} to ${workspace.base_currency}`}
+                placeholder={t("form.ratePlaceholder", { cur: currency })}
+                aria-label={t("form.rateAria", { from: currency, to: workspace.base_currency })}
               />
               <button
                 type="button"
@@ -207,7 +211,7 @@ export function FormStep({
                 onClick={() => fetchRate(currency)}
                 disabled={rateLoading}
               >
-                {rateLoading ? "Fetching…" : "Use current rate"}
+                {rateLoading ? t("form.fetching") : t("form.useRate")}
               </button>
             </>
           )}
@@ -218,13 +222,13 @@ export function FormStep({
       </div>
 
       <div className="field">
-        <label>{isIncome ? "Source" : "Merchant"}</label>
+        <label>{isIncome ? t("form.source") : t("form.merchant")}</label>
         <input
           className="input"
           style={{ minHeight: 44, fontSize: 16 }}
           value={merchant}
           onChange={(e) => setMerchant(e.target.value)}
-          placeholder={isIncome ? "Employer or client" : "Where did you spend?"}
+          placeholder={isIncome ? t("form.sourcePh") : t("form.merchantPh")}
         />
         {fieldErrors.merchant && (
           <div style={{ fontSize: 14, color: "var(--color-accent-2-700)", marginTop: 4 }}>{fieldErrors.merchant}</div>
@@ -232,7 +236,7 @@ export function FormStep({
       </div>
 
       <div className="field">
-        <label>Date</label>
+        <label>{t("form.date")}</label>
         <input
           className="input"
           style={{ fontSize: 16 }}
@@ -246,7 +250,7 @@ export function FormStep({
       </div>
 
       <div className="field">
-        <label>{isIncome ? "Type" : "Category"}</label>
+        <label>{isIncome ? t("form.type") : t("form.category")}</label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {isIncome
             ? INCOME_KINDS.map((k) => (
@@ -256,7 +260,7 @@ export function FormStep({
                   className={`chip${incomeKind === k.value ? " selected" : ""}`}
                   onClick={() => setIncomeKind(k.value)}
                 >
-                  {k.label}
+                  {t(k.label)}
                 </button>
               ))
             : categories.map((c) => (
@@ -266,7 +270,7 @@ export function FormStep({
                   className={`chip${categoryId === c.id ? " selected" : ""}`}
                   onClick={() => setCategoryId(c.id)}
                 >
-                  {c.name}
+                  {categoryLabel(c.name, locale)}
                 </button>
               ))}
         </div>
@@ -274,7 +278,7 @@ export function FormStep({
 
       {!isIncome && (
         <div className="field">
-          <label>Paid with</label>
+          <label>{t("form.paidWith")}</label>
           <div className="seg">
             {PAYMENT_METHODS.map((p) => (
               <label key={p.value} className="seg-opt" style={{ whiteSpace: "nowrap" }}>
@@ -284,7 +288,7 @@ export function FormStep({
                   checked={paymentMethod === p.value}
                   onChange={() => setPaymentMethod(p.value)}
                 />
-                {p.label}
+                {t(p.label)}
               </label>
             ))}
           </div>
@@ -292,20 +296,20 @@ export function FormStep({
       )}
 
       <div className="field">
-        <label>Note (optional)</label>
+        <label>{t("form.note")}</label>
         <input
           className="input"
           style={{ minHeight: 44, fontSize: 16 }}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Anything to remember"
+          placeholder={t("form.notePh")}
         />
       </div>
 
       <label className="radio" style={{ minHeight: 44, fontSize: 16 }}>
         <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
         <span className="dot" style={{ borderRadius: 2 }} />
-        {isIncome ? "Repeats every month (e.g. salary)" : "Repeats every month"}
+        {isIncome ? t("form.repeatsIncome") : t("form.repeats")}
       </label>
 
       {formError && <div style={{ fontSize: 14, color: "var(--color-accent-2-700)" }}>{formError}</div>}
@@ -318,10 +322,10 @@ export function FormStep({
           onClick={handleSave}
           disabled={busy}
         >
-          {busy ? "Saving…" : isEdit ? "Save changes" : isIncome ? "Save income" : "Save cost"}
+          {busy ? t("form.saving") : isEdit ? t("form.saveChanges") : isIncome ? t("form.saveIncome") : t("form.saveCost")}
         </button>
         <button type="button" className="btn btn-secondary" style={{ minHeight: 48 }} onClick={close} disabled={busy}>
-          Cancel
+          {t("form.cancel")}
         </button>
         {isEdit && (
           <button
@@ -331,7 +335,7 @@ export function FormStep({
             onClick={() => setConfirmDelete(true)}
             disabled={busy}
           >
-            Delete
+            {t("form.delete")}
           </button>
         )}
       </div>
@@ -339,10 +343,12 @@ export function FormStep({
       {confirmDelete && editing && (
         <div className="dialog-backdrop">
           <div className="dialog">
-            <div className="dialog-title">Delete this entry?</div>
+            <div className="dialog-title">{t("form.deleteTitle")}</div>
             <div className="dialog-body">
-              {editing.merchant_or_source} ({formatCurrency(editing.amount, workspace.base_currency)}) will be
-              removed from your totals. This can&apos;t be undone.
+              {t("form.deleteBody", {
+                name: editing.merchant_or_source,
+                amount: formatCurrency(editing.amount, workspace.base_currency, 2, locale),
+              })}
             </div>
             <div className="dialog-actions">
               <button
@@ -352,7 +358,7 @@ export function FormStep({
                 onClick={() => setConfirmDelete(false)}
                 disabled={busy}
               >
-                Keep
+                {t("form.keep")}
               </button>
               <button
                 type="button"
@@ -361,7 +367,7 @@ export function FormStep({
                 onClick={handleDelete}
                 disabled={busy}
               >
-                Delete
+                {t("form.delete")}
               </button>
             </div>
           </div>

@@ -1,9 +1,15 @@
 import { Logo } from "@/components/Logo";
 import { WelcomeForm } from "@/components/auth/WelcomeForm";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getT } from "@/lib/i18n/server";
 
-export default function WelcomePage() {
+export default async function WelcomePage() {
+  const { t } = await getT();
   return (
     <div style={{ padding: "28px 20px 36px" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", maxWidth: 1040, margin: "0 auto" }}>
+        <LanguageSwitcher />
+      </div>
       <div
         style={{
           display: "grid",
@@ -26,11 +32,10 @@ export default function WelcomePage() {
               maxWidth: "8em",
             }}
           >
-            Know where it went.
+            {t("welcome.headline")}
           </h1>
           <p style={{ fontSize: 18, lineHeight: 1.5, maxWidth: "24em", color: "var(--color-neutral-700)" }}>
-            Log every cost by hand, or photograph the receipt and let Salda read it. See the month at a glance on
-            your phone or on the web.
+            {t("welcome.tagline")}
           </p>
         </div>
 

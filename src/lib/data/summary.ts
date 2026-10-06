@@ -1,9 +1,11 @@
-import { format, subMonths } from "date-fns";
+import { subMonths } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/currency";
 import { formatMonthLabel, lastNMonths, toDateParam, toMonthParam } from "@/lib/periods";
 import { buildMonthBars, type MonthBar } from "@/lib/bars";
 import { categoryRankColor } from "@/lib/palette";
+import { fmtDate, type Translator } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/i18n/categories";
 import type { Category, CurrencyCode, Transaction } from "@/types/database";
 
 export type SummaryRange = "month" | "quarter" | "half";
@@ -33,7 +35,8 @@ export async function getSummaryData(
   workspaceId: string,
   currency: CurrencyCode,
   range: SummaryRange,
-  categories: Category[]
+  categories: Category[],
+  { t, locale }: Translator
 ): Promise<SummaryData> {
   const supabase = await createClient();
   const today = new Date();
@@ -55,7 +58,7 @@ export async function getSummaryData(
   const all = (data ?? []) as Transaction[];
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 
-  const fmt = (v: number, decimals = 2) => formatCurrency(v, currency, decimals);
+  const fmt = (v: number, decimals = 2) => formatCurrency(v, currency, decimals, locale);
   const sum = (rows: Transaction[]) => rows.reduce((total, t) => total + t.amount, 0);
   const inMonth = (monthKey: string, type?: Transaction["type"]) =>
     all.filter((t) => t.occurred_on.slice(0, 7) === monthKey && (!type || t.type === type));
@@ -80,7 +83,7 @@ export async function getSummaryData(
 
   // Month-by-month bars (3/6 month ranges only).
   const barVals = rangeMonths.map((m) => sum(inMonth(toMonthParam(m), "cost")));
-  const bars = buildMonthBars(rangeMonths, barVals, (v) => fmt(v, 0));
+  const bars = buildMonthBars(rangeMonths, barVals, (v) => fmt(v, 0), locale);
 
   // By category share — only categories with spend in range, ranked by amount.
   const byCategory = new Map<string, number>();
@@ -90,7 +93,7 @@ export async function getSummaryData(
   }
   const total = totR || 1;
   const rankedCategories = Array.from(byCategory.entries())
-    .map(([id, v]) => ({ id, name: id === "uncategorised" ? "Uncategorised" : (categoryById.get(id)?.name ?? "Other"), v }))
+    .map(([id, v]) => ({ id, name: id === "uncategorised" ? t("common.uncategorised") : (categoryById.has(id) ? categoryLabel(categoryById.get(id)!.name, locale) : t("common.other")), v }))
     .sort((a, b) => b.v - a.v);
   const topCategoryAmount = rankedCategories[0]?.v || 1;
   const categoryShare = rankedCategories.map((c, i) => ({
@@ -117,7 +120,7 @@ export async function getSummaryData(
     .map((m) => ({ name: m.name, count: m.n, amount: fmt(m.v) }));
 
   return {
-    title: n === 1 ? formatMonthLabel(today) : `Last ${n} months`,
+    title: n === 1 ? formatMonthLabel(today, locale) : t(n === 3 ? "sum.lastQuarter" : "sum.lastHalf"),
     total: fmt(totR, 0),
     income: `+${fmt(incTotR, 0)}`,
     net: `${netR < 0 ? "−" : "+"}${fmt(Math.abs(netR), 0)}`,
@@ -127,7 +130,10 @@ export async function getSummaryData(
     largest: big ? fmt(big.amount, 0) : "–",
     largestWhere: big ? big.merchant_or_source : "",
     hasDelta: n === 1,
-    deltaText: `${delta > 0 ? "+" : "−"}${fmt(Math.abs(delta), 0)} vs ${format(subMonths(today, 1), "MMM")}`,
+    deltaText: t("sum.vs", {
+      delta: `${delta > 0 ? "+" : "−"}${fmt(Math.abs(delta), 0)}`,
+      month: fmtDate(subMonths(today, 1), "MMM", locale),
+    }),
     deltaClass: delta > 0 ? "tag-accent-2" : "tag-accent",
     hasBars: n > 1,
     bars,

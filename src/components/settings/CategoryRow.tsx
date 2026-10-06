@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { deleteCategory, updateCategoryBudget } from "@/app/actions/settings";
 import { useToast } from "@/lib/toast-context";
+import { useT } from "@/lib/i18n/client";
 import type { CategorySetting } from "@/lib/data/settings";
 
 export function CategoryRow({ category }: { category: CategorySetting }) {
   const { show } = useToast();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
 
   async function handleBudgetBlur(e: React.FocusEvent<HTMLInputElement>) {
@@ -17,7 +19,7 @@ export function CategoryRow({ category }: { category: CategorySetting }) {
       show(result.error);
       return;
     }
-    show("Budget updated");
+    show(t("toast.budget"));
   }
 
   async function handleDelete() {
@@ -28,7 +30,7 @@ export function CategoryRow({ category }: { category: CategorySetting }) {
       show(result.error);
       return;
     }
-    show("Category removed");
+    show(t("toast.categoryRemoved"));
   }
 
   return (
@@ -43,8 +45,8 @@ export function CategoryRow({ category }: { category: CategorySetting }) {
         style={{ minHeight: 44, fontSize: 16 }}
         defaultValue={category.budgetValue ?? ""}
         onBlur={handleBudgetBlur}
-        aria-label="Monthly budget"
-        placeholder="No limit"
+        aria-label={t("set.monthlyBudgetAria")}
+        placeholder={t("set.noLimit")}
       />
       <button
         type="button"
@@ -52,8 +54,8 @@ export function CategoryRow({ category }: { category: CategorySetting }) {
         style={{ width: 44, height: 44, fontSize: 22 }}
         onClick={handleDelete}
         disabled={category.locked || busy}
-        aria-label="Remove category"
-        title={category.locked ? "Only unused categories can be removed" : "Remove category"}
+        aria-label={t("set.removeCat")}
+        title={category.locked ? t("set.onlyUnused") : t("set.removeCat")}
       >
         ×
       </button>

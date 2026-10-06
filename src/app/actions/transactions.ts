@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspace } from "@/lib/workspace";
 import { formatCurrency } from "@/lib/currency";
+import { getT } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n";
 import type { CurrencyCode, IncomeKind, PaymentMethod, TransactionType } from "@/types/database";
 
 type ActionResult = { error: string } | { success: true; toast: string };
@@ -22,7 +24,7 @@ interface ParsedInput {
   isRecurring: boolean;
 }
 
-function parseInput(formData: FormData): { error: string } | { value: ParsedInput } {
+function parseInput(formData: FormData, t: Translator["t"]): { error: string } | { value: ParsedInput } {
   const type: TransactionType = formData.get("type") === "income" ? "income" : "cost";
   const amount = parseFloat(String(formData.get("amount") ?? "").replace(",", "."));
   const currency = String(formData.get("currency") ?? "BAM") as CurrencyCode;
@@ -36,11 +38,11 @@ function parseInput(formData: FormData): { error: string } | { value: ParsedInpu
   const fxRateRaw = String(formData.get("fxRate") ?? "").replace(",", ".");
   const fxRate = fxRateRaw ? parseFloat(fxRateRaw) : null;
 
-  if (!(amount > 0)) return { error: "Enter an amount above 0" };
+  if (!(amount > 0)) return { error: t("err.amount") };
   if (!merchant) {
-    return { error: type === "income" ? "Add a source, e.g. your employer" : "Add a merchant or short description" };
+    return { error: type === "income" ? t("err.sourceReq") : t("err.merchantReq") };
   }
-  if (!date) return { error: "Pick a date" };
+  if (!date) return { error: t("err.date") };
 
   return {
     value: { type, amount, currency, fxRate, merchant, date, categoryId, incomeKind, paymentMethod, note, isRecurring },
@@ -48,12 +50,12 @@ function parseInput(formData: FormData): { error: string } | { value: ParsedInpu
 }
 
 /** Resolves the entered amount (possibly in a foreign currency) into the workspace's base-currency amount + fx snapshot. */
-function resolveAmount(input: ParsedInput, baseCurrency: CurrencyCode): { error: string } | { amount: number; fx: { fx_amount: number; fx_currency: CurrencyCode; fx_rate: number } | null } {
+function resolveAmount(input: ParsedInput, baseCurrency: CurrencyCode, t: Translator["t"]): { error: string } | { amount: number; fx: { fx_amount: number; fx_currency: CurrencyCode; fx_rate: number } | null } {
   if (input.currency === baseCurrency) {
     return { amount: Math.round(input.amount * 100) / 100, fx: null };
   }
   if (!(input.fxRate && input.fxRate > 0)) {
-    return { error: `Enter the exchange rate (1 ${input.currency} = ? ${baseCurrency})` };
+    return { error: t("err.rateReq", { cur: input.currency, base: baseCurrency }) };
   }
   const baseAmount = Math.round(input.amount * input.fxRate * 100) / 100;
   return {
@@ -69,21 +71,22 @@ function revalidateAll() {
 }
 
 export async function createTransaction(formData: FormData): Promise<ActionResult> {
+  const { t, locale } = await getT();
   const current = await getCurrentWorkspace();
-  if (!current) return { error: "No workspace found." };
+  if (!current) return { error: t("err.noWorkspace") };
 
-  const parsed = parseInput(formData);
+  const parsed = parseInput(formData, t);
   if ("error" in parsed) return { error: parsed.error };
   const input = parsed.value;
 
-  const resolved = resolveAmount(input, current.workspace.base_currency);
+  const resolved = resolveAmount(input, current.workspace.base_currency, t);
   if ("error" in resolved) return { error: resolved.error };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You've been signed out. Please sign in again." };
+  if (!user) return { error: t("err.signedOut") };
 
   const { error } = await supabase.from("transactions").insert({
     workspace_id: current.workspace.id,
@@ -105,23 +108,26 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
   if (error) return { error: error.message };
 
   revalidateAll();
-  const amountLabel = formatCurrency(resolved.amount, current.workspace.base_currency);
+  const amountLabel = formatCurrency(resolved.amount, current.workspace.base_currency, 2, locale);
   return {
     success: true,
-    toast:
-      input.type === "income" ? `Added · +${amountLabel} from ${input.merchant}` : `Added · ${amountLabel} at ${input.merchant}`,
+    toast: t(input.type === "income" ? "toast.addedIncome" : "toast.addedCost", {
+      amount: amountLabel,
+      name: input.merchant,
+    }),
   };
 }
 
 export async function updateTransaction(id: string, formData: FormData): Promise<ActionResult> {
+  const { t, locale } = await getT();
   const current = await getCurrentWorkspace();
-  if (!current) return { error: "No workspace found." };
+  if (!current) return { error: t("err.noWorkspace") };
 
-  const parsed = parseInput(formData);
+  const parsed = parseInput(formData, t);
   if ("error" in parsed) return { error: parsed.error };
   const input = parsed.value;
 
-  const resolved = resolveAmount(input, current.workspace.base_currency);
+  const resolved = resolveAmount(input, current.workspace.base_currency, t);
   if ("error" in resolved) return { error: resolved.error };
 
   const supabase = await createClient();
@@ -146,18 +152,22 @@ export async function updateTransaction(id: string, formData: FormData): Promise
   if (error) return { error: error.message };
 
   revalidateAll();
-  const amountLabel = formatCurrency(resolved.amount, current.workspace.base_currency);
+  const amountLabel = formatCurrency(resolved.amount, current.workspace.base_currency, 2, locale);
   return {
     success: true,
-    toast: input.type === "income" ? `Saved · +${amountLabel} from ${input.merchant}` : `Saved · ${amountLabel} at ${input.merchant}`,
+    toast: t(input.type === "income" ? "toast.savedIncome" : "toast.savedCost", {
+      amount: amountLabel,
+      name: input.merchant,
+    }),
   };
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {
+  const { t } = await getT();
   const supabase = await createClient();
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { error: error.message };
 
   revalidateAll();
-  return { success: true, toast: "Entry deleted" };
+  return { success: true, toast: t("toast.deleted") };
 }

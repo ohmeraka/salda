@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getMonthRange, toDateParam } from "@/lib/periods";
 import { formatCurrency } from "@/lib/currency";
 import { incomeKindLabel, paymentLabel } from "@/lib/labels";
+import type { Translator } from "@/lib/i18n";
+import { categoryLabel as localizedCategory } from "@/lib/i18n/categories";
 import type { Category, CurrencyCode, Transaction, TransactionWithCategory } from "@/types/database";
 
 export interface ActivityItem {
@@ -20,7 +22,8 @@ export async function getActivityMonth(
   workspaceId: string,
   monthDate: Date,
   currency: CurrencyCode,
-  categories: Category[]
+  categories: Category[],
+  { t, locale }: Translator
 ): Promise<ActivityItem[]> {
   const supabase = await createClient();
   const { start, end } = getMonthRange(monthDate);
@@ -38,29 +41,33 @@ export async function getActivityMonth(
   const rows = (data ?? []) as Transaction[];
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 
-  return rows.map((t) => {
-    const category = t.category_id ? categoryById.get(t.category_id) ?? null : null;
-    const isIncome = t.type === "income";
-    const categoryLabel = isIncome ? incomeKindLabel(t.income_kind) : category?.name ?? "Uncategorised";
-    const fxLabel = t.fx_amount != null && t.fx_currency ? formatCurrency(t.fx_amount, t.fx_currency) : null;
+  return rows.map((row) => {
+    const category = row.category_id ? categoryById.get(row.category_id) ?? null : null;
+    const isIncome = row.type === "income";
+    const categoryLabel = isIncome ? incomeKindLabel(row.income_kind, t) : category
+        ? localizedCategory(category.name, locale)
+        : t("common.uncategorised");
+    const fxLabel =
+      row.fx_amount != null && row.fx_currency ? formatCurrency(row.fx_amount, row.fx_currency, 2, locale) : null;
+    const monthly = row.is_recurring ? t("common.monthly") : null;
     const metaParts = isIncome
-      ? [categoryLabel, t.is_recurring ? "Monthly" : null, fxLabel]
-      : [categoryLabel, paymentLabel(t.payment_method), t.is_recurring ? "Monthly" : null, fxLabel];
+      ? [categoryLabel, monthly, fxLabel]
+      : [categoryLabel, paymentLabel(row.payment_method, t), monthly, fxLabel];
 
     const withCategory: TransactionWithCategory = {
-      ...t,
+      ...row,
       category: category ? { id: category.id, name: category.name } : null,
     };
 
     return {
       tx: withCategory,
-      date: t.occurred_on,
-      merchant: t.merchant_or_source,
+      date: row.occurred_on,
+      merchant: row.merchant_or_source,
       categoryLabel,
       meta: metaParts.filter(Boolean).join(" · "),
-      amount: (isIncome ? "+" : "") + formatCurrency(t.amount, currency),
+      amount: (isIncome ? "+" : "") + formatCurrency(row.amount, currency, 2, locale),
       isIncome,
-      searchBlob: `${t.merchant_or_source} ${t.note ?? ""} ${categoryLabel}`.toLowerCase(),
+      searchBlob: `${row.merchant_or_source} ${row.note ?? ""} ${categoryLabel}`.toLowerCase(),
     };
   });
 }

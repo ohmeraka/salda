@@ -5,6 +5,7 @@ import { getWorkspaceCategories } from "@/lib/data/categories";
 import { getActivityMonth } from "@/lib/data/activity";
 import { formatMonthLabel, parseMonthParam, shiftMonth, toMonthParam } from "@/lib/periods";
 import { ActivityView } from "@/components/activity/ActivityView";
+import { getT } from "@/lib/i18n/server";
 
 export default async function ActivityPage({
   searchParams,
@@ -16,9 +17,12 @@ export default async function ActivityPage({
   if (!current) redirect("/welcome");
   const { workspace } = current;
 
+  const translator = await getT();
+  const { t, locale } = translator;
+
   const monthDate = parseMonthParam(params.month);
   const categories = await getWorkspaceCategories(workspace.id);
-  const items = await getActivityMonth(workspace.id, monthDate, workspace.base_currency, categories);
+  const items = await getActivityMonth(workspace.id, monthDate, workspace.base_currency, categories, translator);
 
   const noNext = toMonthParam(monthDate) >= toMonthParam(new Date());
   const prevHref = `/activity?month=${toMonthParam(shiftMonth(monthDate, -1))}`;
@@ -26,18 +30,18 @@ export default async function ActivityPage({
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto" }}>
-      <div className="kicker">All costs</div>
+      <div className="kicker">{t("act.kicker")}</div>
       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
         <Link
           href={prevHref}
           className="btn btn-ghost btn-icon"
           style={{ width: 44, height: 44, fontSize: 22 }}
-          aria-label="Previous month"
+          aria-label={t("act.prev")}
         >
           ‹
         </Link>
         <h1 className="page-h1" style={{ flex: 1, textAlign: "center" }}>
-          {formatMonthLabel(monthDate)}
+          {formatMonthLabel(monthDate, locale)}
         </h1>
         {noNext ? (
           <span
@@ -52,7 +56,7 @@ export default async function ActivityPage({
             href={nextHref}
             className="btn btn-ghost btn-icon"
             style={{ width: 44, height: 44, fontSize: 22 }}
-            aria-label="Next month"
+            aria-label={t("act.next")}
           >
             ›
           </Link>

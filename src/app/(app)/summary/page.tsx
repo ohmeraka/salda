@@ -4,6 +4,7 @@ import { getWorkspaceCategories } from "@/lib/data/categories";
 import { getSummaryData, type SummaryRange } from "@/lib/data/summary";
 import { SummaryRangeControl } from "@/components/summary/SummaryRangeControl";
 import { ExportCsvButton } from "@/components/ExportCsvButton";
+import { getT } from "@/lib/i18n/server";
 
 function parseRange(value: string | undefined): SummaryRange {
   return value === "quarter" || value === "half" ? value : "month";
@@ -54,14 +55,17 @@ export default async function SummaryPage({
   if (!current) redirect("/welcome");
   const { workspace } = current;
 
+  const translator = await getT();
+  const { t } = translator;
+
   const range = parseRange(params.range);
   const categories = await getWorkspaceCategories(workspace.id);
-  const s = await getSummaryData(workspace.id, workspace.base_currency, range, categories);
+  const s = await getSummaryData(workspace.id, workspace.base_currency, range, categories, translator);
 
   return (
     <div className="ov-wrap">
       <div>
-        <div className="kicker">Summary</div>
+        <div className="kicker">{t("sum.kicker")}</div>
         <h1 className="page-h1" style={{ marginBottom: 20 }}>
           {s.title}
         </h1>
@@ -76,20 +80,20 @@ export default async function SummaryPage({
         }}
       >
         <StatCell
-          kicker="Spent"
+          kicker={t("sum.spent")}
           value={s.total}
           tag={s.hasDelta ? { text: s.deltaText, className: s.deltaClass } : undefined}
         />
-        <StatCell kicker="Income" value={s.income} color="var(--color-accent-700)" bold />
-        <StatCell kicker="Net" value={s.net} color={s.netColor} bold />
-        <StatCell kicker="Per day" value={s.perDay} />
-        <StatCell kicker="Costs logged" value={String(s.count)} />
-        <StatCell kicker="Largest" value={s.largest} sub={s.largestWhere} />
+        <StatCell kicker={t("sum.income")} value={s.income} color="var(--color-accent-700)" bold />
+        <StatCell kicker={t("sum.net")} value={s.net} color={s.netColor} bold />
+        <StatCell kicker={t("sum.perDay")} value={s.perDay} />
+        <StatCell kicker={t("sum.costsLogged")} value={String(s.count)} />
+        <StatCell kicker={t("sum.largest")} value={s.largest} sub={s.largestWhere} />
       </div>
 
       {s.hasBars && (
         <div>
-          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>Month by month</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>{t("sum.monthByMonth")}</h3>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 170, maxWidth: 640 }}>
             {s.bars.map((b) => (
               <div
@@ -125,11 +129,11 @@ export default async function SummaryPage({
 
       <div className="ov-two-col">
         <div>
-          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>By category</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>{t("ov.byCategory")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {s.categoryShare.length === 0 ? (
               <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>
-                No costs logged in this range.
+                {t("sum.noCosts")}
               </p>
             ) : (
               s.categoryShare.map((c) => (
@@ -160,11 +164,11 @@ export default async function SummaryPage({
         </div>
 
         <div>
-          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>Top merchants</h3>
+          <h3 style={{ fontSize: 22, margin: "0 0 16px" }}>{t("ov.topMerchants")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {s.merchants.length === 0 ? (
               <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>
-                No purchases logged in this range.
+                {t("sum.noPurchases")}
               </p>
             ) : (
               s.merchants.map((m) => (

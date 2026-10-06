@@ -45,6 +45,8 @@ In the Supabase dashboard's SQL Editor, run the contents of
 `supabase/migrations/0001_init.sql` (or apply it with the Supabase CLI:
 `supabase db push`). This creates every table, the `handle_new_user` /
 `accept_pending_invites` functions, and all Row Level Security policies.
+Then run `supabase/migrations/0002_fix_rls_recursion.sql` the same way — it
+fixes an infinite-recursion bug in the 0001 policies and is required.
 
 ### 3. ⚠️ Required: switch the signup email template to a 6-digit code
 
@@ -72,6 +74,17 @@ npm run dev
 ```
 
 Visit `http://localhost:3000` — it redirects to `/welcome`.
+
+## Languages (English / Bosnian)
+
+The interface is available in English and Bosnian. Switch on the sign-in
+screen or in **Settings → Language**; the choice is stored in a cookie
+(`salda_locale`). All text lives in `src/lib/i18n/messages.ts` — `en` is the
+source and `bs` is type-checked against it, so a missing translation fails
+the build. To add a language, add its dictionary there, extend `Locale` in
+`src/lib/i18n/index.ts`, and add it to `LanguageSwitcher`. Data you typed
+(merchants, notes, category names) is never translated. New accounts get
+starter categories in the language active at sign-up.
 
 ## Scope decisions
 

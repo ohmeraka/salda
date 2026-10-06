@@ -1,24 +1,31 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format } from "date-fns";
 import { useEditor } from "@/lib/editor-context";
 import { useWorkspace } from "@/lib/workspace-context";
 import { formatCurrency } from "@/lib/currency";
 import { parseDateOnly } from "@/lib/periods";
 import { SearchIcon } from "@/components/icons";
+import { useT } from "@/lib/i18n/client";
+import { fmtDate } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/i18n/categories";
 import type { ActivityItem } from "@/lib/data/activity";
+
+const ALL = "__all";
+const INCOME = "__income";
 
 export function ActivityView({ items }: { items: ActivityItem[] }) {
   const { openEdit } = useEditor();
   const { categories, workspace } = useWorkspace();
+  const { t, tn, locale } = useT();
   const [q, setQ] = useState("");
-  const [catFilter, setCatFilter] = useState("All");
+  // Filter keys are fixed sentinels (not display text) so they survive a language switch.
+  const [catFilter, setCatFilter] = useState(ALL);
 
   const filtered = useMemo(() => {
     let list = items;
-    if (catFilter === "Income") list = list.filter((i) => i.isIncome);
-    else if (catFilter !== "All") list = list.filter((i) => !i.isIncome && i.categoryLabel === catFilter);
+    if (catFilter === INCOME) list = list.filter((i) => i.isIncome);
+    else if (catFilter !== ALL) list = list.filter((i) => !i.isIncome && i.tx.category_id === catFilter);
     const qq = q.trim().toLowerCase();
     if (qq) list = list.filter((i) => i.searchBlob.includes(qq));
     return list;
@@ -28,14 +35,14 @@ export function ActivityView({ items }: { items: ActivityItem[] }) {
   const incomeOnly = filtered.filter((i) => i.isIncome);
   const costsTotal = costsOnly.reduce((sum, i) => sum + i.tx.amount, 0);
   const incomeTotal = incomeOnly.reduce((sum, i) => sum + i.tx.amount, 0);
-  const fmt = (n: number) => formatCurrency(n, workspace.base_currency);
+  const fmt = (n: number) => formatCurrency(n, workspace.base_currency, 2, locale);
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; total: number; hasCost: boolean; items: ActivityItem[] }>();
     for (const item of filtered) {
       let g = map.get(item.date);
       if (!g) {
-        g = { label: format(parseDateOnly(item.date), "EEE, d MMM"), total: 0, hasCost: false, items: [] };
+        g = { label: fmtDate(parseDateOnly(item.date), "EEE, d MMM", locale), total: 0, hasCost: false, items: [] };
         map.set(item.date, g);
       }
       if (!item.isIncome) {
@@ -45,15 +52,19 @@ export function ActivityView({ items }: { items: ActivityItem[] }) {
       g.items.push(item);
     }
     return Array.from(map.values());
-  }, [filtered]);
+  }, [filtered, locale]);
 
-  const chips = ["All", "Income", ...categories.map((c) => c.name)];
+  const chips = [
+    { key: ALL, label: t("act.all") },
+    { key: INCOME, label: t("common.income") },
+    ...categories.map((c) => ({ key: c.id, label: categoryLabel(c.name, locale) })),
+  ];
 
   return (
     <div>
       <div style={{ textAlign: "center", fontSize: 15, color: "var(--color-neutral-700)", marginBottom: 22 }}>
-        {costsOnly.length} {costsOnly.length === 1 ? "cost" : "costs"} · {fmt(costsTotal)}
-        {incomeOnly.length > 0 ? ` · +${fmt(incomeTotal)} income` : ""}
+        {tn("act.costs", costsOnly.length)} · {fmt(costsTotal)}
+        {incomeOnly.length > 0 ? ` · ${t("act.incomeSummary", { amount: fmt(incomeTotal) })}` : ""}
       </div>
 
       <div style={{ position: "relative", marginBottom: 14 }}>
@@ -66,25 +77,25 @@ export function ActivityView({ items }: { items: ActivityItem[] }) {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search merchant, note or category"
+          placeholder={t("act.search")}
         />
       </div>
 
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, marginBottom: 18 }}>
-        {chips.map((name) => (
+        {chips.map((chip) => (
           <button
-            key={name}
-            className={`chip${catFilter === name ? " selected" : ""}`}
-            onClick={() => setCatFilter(name)}
+            key={chip.key}
+            className={`chip${catFilter === chip.key ? " selected" : ""}`}
+            onClick={() => setCatFilter(chip.key)}
           >
-            {name}
+            {chip.label}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
         <p style={{ fontSize: 17, color: "var(--color-neutral-700)", padding: "40px 0" }}>
-          Nothing matches. Clear the search or pick another month.
+          {t("act.nothing")}
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>

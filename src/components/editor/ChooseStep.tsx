@@ -2,13 +2,15 @@
 
 import { useEditor } from "@/lib/editor-context";
 import { ManualIcon, IncomeIcon, ReceiptIcon } from "@/components/icons";
+import { useT } from "@/lib/i18n/client";
 
 export function ChooseStep() {
   const { chooseManual, chooseIncome } = useEditor();
+  const { t } = useT();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <button type="button" className="choose-row" disabled title="Coming soon — receipt scanning">
+      <button type="button" className="choose-row" disabled title={t("ed.scanSoon")}>
         <ReceiptIcon />
         <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -20,13 +22,13 @@ export function ChooseStep() {
                 color: "var(--color-accent-700)",
               }}
             >
-              Fastest
+              {t("ed.fastest")}
             </span>
-            <span className="tag tag-neutral">Soon</span>
+            <span className="tag tag-neutral">{t("common.soon")}</span>
           </span>
-          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>Scan a receipt</span>
+          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>{t("ed.scan")}</span>
           <span style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>
-            Photograph it. We read merchant, date and total.
+            {t("ed.scanDesc")}
           </span>
         </span>
       </button>
@@ -34,9 +36,9 @@ export function ChooseStep() {
       <button type="button" className="choose-row" onClick={chooseManual}>
         <ManualIcon />
         <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>Enter manually</span>
+          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>{t("ed.manual")}</span>
           <span style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>
-            Type in the amount, merchant and category.
+            {t("ed.manualDesc")}
           </span>
         </span>
       </button>
@@ -44,8 +46,8 @@ export function ChooseStep() {
       <button type="button" className="choose-row" onClick={chooseIncome}>
         <IncomeIcon />
         <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>Add income</span>
-          <span style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>Salary or additional income.</span>
+          <span style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>{t("ed.addIncome")}</span>
+          <span style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>{t("ed.addIncomeDesc")}</span>
         </span>
       </button>
     </div>

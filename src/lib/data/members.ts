@@ -29,7 +29,8 @@ function firstProfile(profile: MemberJoinRow["profile"]) {
 
 export async function getWorkspaceRoster(
   workspaceId: string,
-  currentUserId: string
+  currentUserId: string,
+  fallbackName: string
 ): Promise<{ members: MemberRow[]; invites: InviteRow[] }> {
   const supabase = await createClient();
 
@@ -54,7 +55,7 @@ export async function getWorkspaceRoster(
     const profile = firstProfile(m.profile);
     return {
       userId: m.user_id,
-      displayName: profile?.display_name ?? "Member",
+      displayName: profile?.display_name ?? fallbackName,
       email: profile?.email ?? null,
       role: m.role,
       isSelf: m.user_id === currentUserId,

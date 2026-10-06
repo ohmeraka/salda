@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspace } from "@/lib/workspace";
+import { ensureWorkspace } from "@/lib/ensure-workspace";
+import { signOut } from "@/app/actions/auth";
+import { getT } from "@/lib/i18n/server";
 import { getWorkspaceCategories } from "@/lib/data/categories";
 import { WorkspaceProvider } from "@/lib/workspace-context";
 import { ToastProvider } from "@/lib/toast-context";
@@ -15,12 +18,36 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   } = await supabase.auth.getUser();
   if (!user) redirect("/welcome");
 
-  const current = await getCurrentWorkspace();
-  if (!current) redirect("/welcome");
-
-  const categories = await getWorkspaceCategories(current.workspace.id);
   const displayName =
     (user.user_metadata?.display_name as string | undefined) ?? user.email?.split("@")[0] ?? "there";
+
+  const { t } = await getT();
+
+  let current = await getCurrentWorkspace();
+  if (!current) {
+    // Signed in but no workspace yet — try to create one. If that fails, show
+    // why instead of redirecting to /welcome (the proxy bounces signed-in
+    // users straight back, which makes an endless redirect loop).
+    const setupError = await ensureWorkspace(supabase, user.id, displayName);
+    current = await getCurrentWorkspace();
+    if (!current) {
+      return (
+        <div style={{ maxWidth: 560, margin: "64px auto", padding: "0 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <h1 style={{ fontSize: 32, margin: 0 }}>{t("setup.title")}</h1>
+          <p style={{ margin: 0, color: "var(--color-neutral-700)" }}>
+            {setupError ?? t("setup.noWorkspace")} {t("setup.hint")}
+          </p>
+          <form action={signOut}>
+            <button type="submit" className="btn btn-secondary">
+              {t("set.signOut")}
+            </button>
+          </form>
+        </div>
+      );
+    }
+  }
+
+  const categories = await getWorkspaceCategories(current.workspace.id);
 
   return (
     <WorkspaceProvider

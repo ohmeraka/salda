@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentWorkspace } from "@/lib/workspace";
-import { paymentLabel } from "@/lib/labels";
+import { incomeKindLabel, paymentLabel } from "@/lib/labels";
+import { getT } from "@/lib/i18n/server";
+import { categoryLabel } from "@/lib/i18n/categories";
 
 interface ExportRow {
   type: "cost" | "income";
@@ -23,8 +25,9 @@ function categoryName(category: ExportRow["category"]): string {
 
 /** Builds the "Export all costs as CSV" file — actually every transaction (costs and income), matching the design's own reference implementation. */
 export async function exportTransactionsCsv(): Promise<{ error: string } | { success: true; csv: string }> {
+  const { t, locale } = await getT();
   const current = await getCurrentWorkspace();
-  if (!current) return { error: "No workspace found." };
+  if (!current) return { error: t("err.noWorkspace") };
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -36,24 +39,29 @@ export async function exportTransactionsCsv(): Promise<{ error: string } | { suc
   if (error) return { error: error.message };
   const rows = (data ?? []) as unknown as ExportRow[];
 
-  const header = ["Type", "Date", "Merchant / source", "Category", "Payment", "Amount", "Notes", "Recurring"];
-  const body = rows.map((t) => {
-    const isIncome = t.type === "income";
-    const category = isIncome
-      ? t.income_kind === "salary"
-        ? "Salary"
-        : "Additional income"
-      : categoryName(t.category);
-    const amount = (isIncome ? t.amount : -t.amount).toFixed(2);
+  const header = [
+    t("csv.type"),
+    t("csv.date"),
+    t("csv.merchant"),
+    t("csv.category"),
+    t("csv.payment"),
+    t("csv.amount"),
+    t("csv.notes"),
+    t("csv.recurring"),
+  ];
+  const body = rows.map((row) => {
+    const isIncome = row.type === "income";
+    const category = isIncome ? incomeKindLabel(row.income_kind, t) : categoryLabel(categoryName(row.category), locale);
+    const amount = (isIncome ? row.amount : -row.amount).toFixed(2);
     return [
-      t.type,
-      t.occurred_on,
-      t.merchant_or_source,
+      t(isIncome ? "csv.income" : "csv.cost"),
+      row.occurred_on,
+      row.merchant_or_source,
       category,
-      isIncome ? "" : paymentLabel(t.payment_method),
+      isIncome ? "" : paymentLabel(row.payment_method, t),
       amount,
-      t.note ?? "",
-      t.is_recurring ? "yes" : "no",
+      row.note ?? "",
+      t(row.is_recurring ? "csv.yes" : "csv.no"),
     ];
   });
 
