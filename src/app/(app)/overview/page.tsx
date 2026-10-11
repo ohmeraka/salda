@@ -46,39 +46,26 @@ export default async function OverviewPage() {
   return (
     <div className="ov-wrap">
       <div className="ov-hero-grid">
-        <div>
+        <div className="ov-hero-card">
           <div className="kicker">{t("ov.balance")}</div>
-          <div className="ov-hero-num" style={{ color: d.balanceColor, marginBottom: 6 }}>
+          <div className="ov-hero-num" style={{ color: d.balanceColor }}>
             {d.balance}
           </div>
-          <div style={{ fontSize: 14, color: "var(--color-neutral-700)" }}>{t("ov.balanceSub")}</div>
+          <div className="ov-hero-sub">{t("ov.balanceSub")}</div>
 
           <div className="kicker" style={{ marginTop: 28 }}>
             {d.monthLabel}
           </div>
           <div className="ov-stats" style={{ marginTop: 8 }}>
-            <StatTile label={t("ov.income")} value={d.income} color="var(--color-accent-700)" />
+            <StatTile label={t("ov.income")} value={d.income} />
             <StatTile label={t("ov.net")} value={d.net} sub={t("ov.netSub")} color={d.netColor} strong />
-            <StatTile label={t("sum.spent")} value={d.spent} color="#b45309" />
+            <StatTile label={t("sum.spent")} value={d.spent} />
           </div>
 
-          <div
-            style={{
-              height: 8,
-              background: "var(--color-surface)",
-              borderRadius: 2,
-              overflow: "hidden",
-              maxWidth: 560,
-              marginTop: 18,
-            }}
-          >
+          <div className="ov-budget-track">
             <div
-              style={{
-                height: "100%",
-                borderRadius: 2,
-                width: `${d.budgetBarPct}%`,
-                background: d.budgetBarColor,
-              }}
+              className="ov-budget-fill"
+              style={{ width: `${d.budgetBarPct}%`, background: d.budgetBarColor }}
             />
           </div>
           <div className="ov-hero-row">
@@ -86,7 +73,7 @@ export default async function OverviewPage() {
             <span className={`tag ${d.deltaClass}`}>{d.deltaText}</span>
           </div>
         </div>
-        <div>
+        <div className="ov-chart-card">
           <div className="kicker">{t("ov.lastSix")}</div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170 }}>
             {d.sixMonthBars.map((b) => (
@@ -109,7 +96,7 @@ export default async function OverviewPage() {
                   style={{
                     width: "100%",
                     maxWidth: 44,
-                    borderRadius: "2px 2px 0 0",
+                    borderRadius: "10px 10px 4px 4px",
                     height: b.heightPx,
                     background: b.current ? "var(--color-accent)" : "var(--color-neutral-300)",
                   }}
@@ -144,13 +131,13 @@ export default async function OverviewPage() {
                     <span>{c.name}</span>
                     <span style={{ fontVariantNumeric: "tabular-nums" }}>{c.amountLabel}</span>
                   </div>
-                  <div style={{ height: 6, background: "var(--color-surface)", borderRadius: 2 }}>
+                  <div style={{ height: 10, background: "var(--color-neutral-200)", borderRadius: 999 }}>
                     <div
                       style={{
                         height: "100%",
                         width: `${c.widthPct}%`,
                         background: c.color,
-                        borderRadius: 2,
+                        borderRadius: 999,
                       }}
                     />
                   </div>
@@ -198,7 +185,7 @@ export default async function OverviewPage() {
                 <span
                   style={{
                     fontVariantNumeric: "tabular-nums",
-                    color: u.isIncome ? "var(--color-accent-700)" : "inherit",
+                    color: u.isIncome ? "var(--color-income)" : "inherit",
                   }}
                 >
                   {u.amount}

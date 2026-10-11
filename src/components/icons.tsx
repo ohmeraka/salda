@@ -71,7 +71,7 @@ export function CloseIcon({ size = 24 }: { size?: number }) {
 
 export function ReceiptIcon({ size = 36 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent-700)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
       <path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
     </svg>
   );
@@ -79,7 +79,7 @@ export function ReceiptIcon({ size = 36 }: { size?: number }) {
 
 export function ManualIcon({ size = 36 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent-700)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
       <path d="M4 20l1-5L16 4l4 4L9 19zM14 6l4 4" />
     </svg>
   );
@@ -87,7 +87,7 @@ export function ManualIcon({ size = 36 }: { size?: number }) {
 
 export function IncomeIcon({ size = 36 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent-700)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" fillOpacity={0.16} stroke="var(--color-accent)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none" }} aria-hidden>
       <path d="M12 20V6M6 12l6-6 6 6M5 20h14" />
     </svg>
   );

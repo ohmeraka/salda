@@ -124,7 +124,7 @@ export async function getSummaryData(
     total: fmt(totR, 0),
     income: `+${fmt(incTotR, 0)}`,
     net: `${netR < 0 ? "−" : "+"}${fmt(Math.abs(netR), 0)}`,
-    netColor: netR < 0 ? "var(--color-accent-2-700)" : "var(--color-accent-700)",
+    netColor: netR < 0 ? "var(--color-accent-2-700)" : "var(--color-income)",
     perDay: fmt(totR / Math.max(days, 1)),
     count: rangeCosts.length,
     largest: big ? fmt(big.amount, 0) : "–",

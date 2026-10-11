@@ -129,7 +129,7 @@ export function ActivityView({ items }: { items: ActivityItem[] }) {
                     style={{
                       fontSize: 16,
                       fontVariantNumeric: "tabular-nums",
-                      color: item.isIncome ? "var(--color-accent-700)" : "inherit",
+                      color: item.isIncome ? "var(--color-income)" : "inherit",
                     }}
                   >
                     {item.amount}

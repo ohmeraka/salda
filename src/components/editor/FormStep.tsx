@@ -308,7 +308,7 @@ export function FormStep({
 
       <label className="radio" style={{ minHeight: 44, fontSize: 16 }}>
         <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-        <span className="dot" style={{ borderRadius: 2 }} />
+        <span className="dot" style={{ borderRadius: 7 }} />
         {isIncome ? t("form.repeatsIncome") : t("form.repeats")}
       </label>
 

@@ -123,7 +123,7 @@ export function DesktopNav() {
         <Logo markSize={32} wordmarkSize={26} />
       </div>
 
-      <button onClick={openAdd} className="btn btn-primary btn-block" style={{ marginBottom: 16, fontSize: 16 }}>
+      <button onClick={openAdd} className="btn btn-primary btn-block" style={{ marginBottom: 16, fontSize: 16, minHeight: 52 }}>
         <NavGlyph name="add" size={20} />
         {t("nav.add")}
       </button>
@@ -138,13 +138,13 @@ export function DesktopNav() {
               display: "flex",
               alignItems: "center",
               gap: 12,
-              padding: "10px 12px",
-              borderRadius: 2,
+              padding: "10px 14px",
+              borderRadius: 999,
               color: active ? "var(--color-accent-700)" : "var(--color-text)",
               background: active ? "var(--color-accent-100)" : "transparent",
               textDecoration: "none",
               fontSize: 15,
-              minHeight: 44,
+              minHeight: 46,
             }}
           >
             <NavGlyph name={tab.icon} size={22} />

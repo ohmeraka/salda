@@ -31,10 +31,11 @@ export interface OverviewData {
   recent: { tx: Transaction; categoryName: string | null; meta: string; amount: string }[];
 }
 
-const POSITIVE = "var(--color-accent-700)";
-const NEGATIVE = "var(--color-accent-2-700)";
-const BALANCE_POSITIVE = "var(--color-positive)";
-const BALANCE_NEGATIVE = "var(--color-negative)";
+// Both sit on the indigo hero card, so they use the lighter "on-accent" tints.
+const POSITIVE = "var(--color-positive-on-accent)";
+const NEGATIVE = "var(--color-negative-on-accent)";
+const BALANCE_POSITIVE = "var(--color-positive-on-accent)";
+const BALANCE_NEGATIVE = "var(--color-negative-on-accent)";
 
 /**
  * Income minus costs across every entry dated up to today. Read in pages of
@@ -216,7 +217,7 @@ export async function getOverviewData(
     spent: fmt(tot, 0),
     hasBudget,
     budgetBarPct: Math.min(100, pctB * 100),
-    budgetBarColor: pctB >= 0.9 ? "var(--color-accent-2)" : "var(--color-accent)",
+    budgetBarColor: pctB >= 0.9 ? "var(--color-accent-2)" : "var(--color-pop)",
     budgetLine: hasBudget
       ? left >= 0
         ? t("ov.leftOf", { left: fmt(left, 0), budget: fmt(budget!, 0) })

@@ -84,7 +84,7 @@ export default async function SummaryPage({
           value={s.total}
           tag={s.hasDelta ? { text: s.deltaText, className: s.deltaClass } : undefined}
         />
-        <StatCell kicker={t("sum.income")} value={s.income} color="var(--color-accent-700)" bold />
+        <StatCell kicker={t("sum.income")} value={s.income} color="var(--color-income)" bold />
         <StatCell kicker={t("sum.net")} value={s.net} color={s.netColor} bold />
         <StatCell kicker={t("sum.perDay")} value={s.perDay} />
         <StatCell kicker={t("sum.costsLogged")} value={String(s.count)} />
@@ -115,7 +115,7 @@ export default async function SummaryPage({
                   style={{
                     width: "100%",
                     maxWidth: 44,
-                    borderRadius: "2px 2px 0 0",
+                    borderRadius: "10px 10px 4px 4px",
                     height: b.heightPx,
                     background: b.current ? "var(--color-accent)" : "var(--color-neutral-300)",
                   }}
@@ -152,9 +152,9 @@ export default async function SummaryPage({
                       {c.amount} <span style={{ color: "var(--color-neutral-700)", fontSize: 13 }}>{c.pct}</span>
                     </span>
                   </div>
-                  <div style={{ height: 6, background: "var(--color-surface)", borderRadius: 2 }}>
+                  <div style={{ height: 10, background: "var(--color-neutral-200)", borderRadius: 999 }}>
                     <div
-                      style={{ height: "100%", width: `${c.widthPct}%`, background: c.color, borderRadius: 2 }}
+                      style={{ height: "100%", width: `${c.widthPct}%`, background: c.color, borderRadius: 999 }}
                     />
                   </div>
                 </div>
