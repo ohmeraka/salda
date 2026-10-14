@@ -76,7 +76,7 @@ export function WelcomeForm() {
         </label>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
         {PROVIDERS.map((provider) => (
           <button
             key={provider}
@@ -88,7 +88,7 @@ export function WelcomeForm() {
           >
             <ProviderIcon provider={provider} />
             {provider}
-            <span className="tag tag-neutral" style={{ marginLeft: "auto" }}>
+            <span className="tag tag-neutral max-[480px]:hidden" style={{ marginLeft: "auto" }}>
               {t("common.soon")}
             </span>
           </button>

@@ -35,6 +35,7 @@ export const en = {
   "welcome.headline": "Know where it went.",
   "welcome.tagline":
     "Log every cost by hand, or photograph the receipt and let Salda read it. See the month at a glance on your phone or on the web.",
+  "welcome.heroAlt": "Illustration: a calculator, a magnifying glass and a pie chart around a dollar sign",
   "welcome.signUp": "Sign up",
   "welcome.signIn": "Sign in",
   "welcome.soonTitle": "Coming soon — needs a registered OAuth app",
@@ -117,7 +118,7 @@ export const en = {
   "ed.scan": "Scan a receipt",
   "ed.scanDesc": "Photograph it. We read merchant, date and total.",
   "ed.scanSoon": "Coming soon — receipt scanning",
-  "ed.manual": "Manual Cost Entry",
+  "ed.manual": "Enter manually",
   "ed.manualDesc": "Type in the amount, merchant and category.",
   "ed.addIncome": "Add income",
   "ed.addIncomeDesc": "Salary or additional income.",
@@ -297,6 +298,7 @@ export const bs: Record<MessageKey, string> = {
   "welcome.headline": "Znaj gdje je otišlo.",
   "welcome.tagline":
     "Unesi svaki trošak ručno ili fotografiši račun pa neka ga Salda pročita. Pogledaj cijeli mjesec na prvi pogled, na telefonu ili webu.",
+  "welcome.heroAlt": "Ilustracija: kalkulator, lupa i kružni grafikon oko znaka za dolar",
   "welcome.signUp": "Registracija",
   "welcome.signIn": "Prijava",
   "welcome.soonTitle": "Uskoro — potrebna je registrovana OAuth aplikacija",

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Logo } from "@/components/Logo";
 import { WelcomeForm } from "@/components/auth/WelcomeForm";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -37,6 +38,26 @@ export default async function WelcomePage() {
           <p style={{ fontSize: 18, lineHeight: 1.5, maxWidth: "24em", color: "var(--color-neutral-700)" }}>
             {t("welcome.tagline")}
           </p>
+          <div
+            style={{
+              position: "relative",
+              marginTop: 28,
+              width: "100%",
+              maxWidth: 420,
+              aspectRatio: "4 / 3",
+              borderRadius: 24,
+              overflow: "hidden",
+            }}
+          >
+            <Image
+              src="/welcome-hero.jpg"
+              alt={t("welcome.heroAlt")}
+              fill
+              sizes="(max-width: 480px) 100vw, 420px"
+              style={{ objectFit: "cover" }}
+              priority
+            />
+          </div>
         </div>
 
         <WelcomeForm />
