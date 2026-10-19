@@ -75,6 +75,18 @@ npm run dev
 
 Visit `http://localhost:3000` — it redirects to `/welcome`.
 
+## Deploying to Vercel
+
+1. Push this repo to GitHub.
+2. In Vercel: **Add New → Project**, import the repo (framework: Next.js is
+   detected automatically; no build settings to change).
+3. Under **Environment Variables**, add the same four values as `.env.local`:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (your
+   publishable key), `SUPABASE_SERVICE_ROLE_KEY` (your secret key) and
+   `EXCHANGE_RATE_API_KEY`. Never commit `.env.local`.
+4. Deploy, then in Supabase → **Authentication → URL Configuration** set
+   **Site URL** to your Vercel URL and add it under **Redirect URLs**.
+
 ## Languages (English / Bosnian)
 
 The interface is available in English and Bosnian. Switch on the sign-in
@@ -157,3 +169,24 @@ supabase/migrations/    SQL schema + RLS policies
   email provider like Resend) to actually notify invited people.
 - **PWA polish** — add `screenshots` to `public/manifest.json` for a
   richer install prompt, and consider a maskable icon variant.
+
+## Automated tests
+
+| Command | What it does |
+| --- | --- |
+| `npm test` | Unit tests (Vitest) for the logic in `src/lib` — currency, dates, chart bars, category translation, EN/BS dictionaries. Takes seconds. |
+| `npm run test:watch` | Same, re-runs while you edit. |
+| `npm run test:e2e` | End-to-end tests (Playwright) in a real browser, desktop and phone size. Starts the app itself. |
+| `npm run typecheck` / `npm run lint` | TypeScript and ESLint checks. |
+
+First time only: `npx playwright install chromium`.
+
+**Signed-in tests** are skipped unless you provide a *test* account that exists on your **dev** Supabase project:
+
+```powershell
+$env:E2E_EMAIL="test@example.com"; $env:E2E_PASSWORD="your-test-password"; npm run test:e2e
+```
+
+To test a deployed site instead of a local one: `$env:E2E_BASE_URL="https://your-preview.vercel.app"; npm run test:e2e`.
+
+**CI:** `.github/workflows/ci.yml` runs lint, types, unit tests, build and the E2E tests on every push and pull request. Results appear under the repo's **Actions** tab.
