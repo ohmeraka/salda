@@ -23,7 +23,7 @@ const baseURL = externalUrl ?? `http://localhost:${port}`;
 const isCI = !!process.env.CI;
 const hasEnvFile = existsSync(".env.local");
 
-const placeholderEnv = hasEnvFile
+const placeholderEnv: Record<string, string> = hasEnvFile
   ? {}
   : {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
