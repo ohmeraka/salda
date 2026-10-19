@@ -222,8 +222,9 @@ export function FormStep({
       </div>
 
       <div className="field">
-        <label>{isIncome ? t("form.source") : t("form.merchant")}</label>
+        <label htmlFor="tx-merchant">{isIncome ? t("form.source") : t("form.merchant")}</label>
         <input
+          id="tx-merchant"
           className="input"
           style={{ minHeight: 44, fontSize: 16 }}
           value={merchant}
@@ -236,8 +237,9 @@ export function FormStep({
       </div>
 
       <div className="field">
-        <label>{t("form.date")}</label>
+        <label htmlFor="tx-date">{t("form.date")}</label>
         <input
+          id="tx-date"
           className="input"
           style={{ fontSize: 16 }}
           type="date"

@@ -25,9 +25,16 @@ npm run dev     # next dev (Turbopack) — http://localhost:3000, redirects to /
 npm run build   # production build
 npm run start   # serve the production build
 npm run lint    # eslint (eslint-config-next)
+npm run typecheck  # next typegen + tsc (app and test code)
+npm test        # unit tests (Vitest, tests/unit)
+npm run test:e2e   # end-to-end tests (Playwright, tests/e2e); see README "Automated tests"
 ```
 
-There are no tests. "Done" means it builds (`npm run build`) and lints clean.
+"Done" means it builds, lints clean, type-checks and the tests pass. Signed-in E2E tests need
+`E2E_EMAIL` / `E2E_PASSWORD` for a test account on a DEV Supabase project (never production);
+without them they skip. When you add or change UI, keep selectors in `tests/e2e/helpers.ts` in sync
+and add/adjust tests; tests that create data must name it with the `E2E-` prefix (the `tag` fixture).
+
 `node check-supabase.mjs` is a one-off connectivity probe against the configured
 Supabase project, not part of the app.
 

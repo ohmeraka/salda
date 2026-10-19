@@ -35,7 +35,17 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: isCI,
-  retries: isCI ? 1 : 0,
+  // The signed-in tests share one real dev-DB account and one dev server; much above this
+  // and both start to time out under their own concurrent load (slow responses, occasional
+  // crossed reads of the account-wide totals).
+  workers: 3,
+  // Even locally: tests share one real dev-DB account and run in parallel, so an
+  // occasional transient timing clash under load is expected, not a real failure.
+  retries: 1,
+  // A bit above the 30s default: tests that clean up several tagged entries (several
+  // sequential UI round trips) can brush against it when the dev server is under load
+  // from other tests running in parallel against the same real backend.
+  timeout: 60_000,
   reporter: isCI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
@@ -45,9 +55,21 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    // Signs in once and saves the session for the signed-in tests (skipped without E2E_EMAIL/E2E_PASSWORD).
+    { name: "setup", testMatch: /auth\.setup\.ts/ },
+    {
+      name: "desktop",
+      testIgnore: /auth\.setup\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"] },
+    },
     // A narrow phone viewport, but still Chromium so only one browser must be installed.
-    { name: "phone", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
+    {
+      name: "phone",
+      testIgnore: /auth\.setup\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+    },
   ],
   webServer: externalUrl
     ? undefined

@@ -52,7 +52,7 @@
   --color-positive: #067647;
   --color-negative: #c62828;
   --color-positive-on-accent: #7cf2b0;
-  --color-negative-on-accent: #ffb3bd;
+  --color-negative-on-accent: #ffc2cc;
 
   /* Client override: Arial everywhere (design system default is a serif heading font). */
   --font-heading: Arial, Helvetica, sans-serif;
@@ -154,7 +154,7 @@ input[type="date"] {
   min-height: 44px;
 }
 .text-muted {
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
 }
 :focus {
   outline: none;
@@ -351,7 +351,7 @@ textarea.input {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: 44px;
   padding: 0 16px;
   font-size: 14px;
   font-weight: 700;
@@ -530,7 +530,9 @@ textarea.input {
   gap: 20px;
   align-items: stretch;
 }
-/* Left hero card: solid indigo, white text (Balance, Income / Net / Spent, budget bar). */
+/* Left hero card: solid indigo, white text (Balance, Income / Net / Spent, budget bar).
+   Uses the darker accent-800 (not the regular --color-accent) so the lighter nested
+   .ov-stat / .ov-stat-strong surfaces still meet WCAG AA contrast for their label text. */
 .ov-hero-card {
   display: flex;
   flex-direction: column;
@@ -538,7 +540,7 @@ textarea.input {
   min-width: 0;
   padding: 28px 22px 26px;
   border-radius: 32px;
-  background: var(--color-accent);
+  background: var(--color-accent-800);
   color: #fff;
 }
 .ov-hero-card .kicker {
@@ -762,4 +764,12 @@ textarea.input {
   padding: 12px 20px;
   border-radius: 999px;
   white-space: nowrap;
+}
+
+/* Hide the "Soon" pill on the sign-in provider buttons on small phones so the buttons never overflow.
+   (Plain CSS on purpose: a Tailwind utility loses to the unlayered .tag rule above.) */
+@media (max-width: 480px) {
+  .provider-soon {
+    display: none;
+  }
 }

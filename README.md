@@ -174,19 +174,39 @@ supabase/migrations/    SQL schema + RLS policies
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Unit tests (Vitest) for the logic in `src/lib` — currency, dates, chart bars, category translation, EN/BS dictionaries. Takes seconds. |
-| `npm run test:watch` | Same, re-runs while you edit. |
-| `npm run test:e2e` | End-to-end tests (Playwright) in a real browser, desktop and phone size. Starts the app itself. |
-| `npm run typecheck` / `npm run lint` | TypeScript and ESLint checks. |
+| `npm test` | Unit tests (Vitest) for the logic in `src/lib`: currency, dates, chart bars, category translation, EN/BS dictionaries. Seconds. |
+| `npm run test:e2e` | All end-to-end tests (Playwright) in a real browser, desktop and phone size. Starts the app itself. |
+| `npm run test:e2e:functional` | Only the costs, categories and user-journey tests (need a login, see below). |
+| `npm run test:e2e:ux` | Only the UI/UX checks: accessibility, no sideways scrolling, touch targets, console errors, keyboard focus, speed, screenshots. |
+| `npm run typecheck` / `npm run lint` | TypeScript and ESLint checks (the typecheck also covers the test code). |
+| `npx playwright show-report` | Opens the last E2E report, including screenshots of every page (English and Bosnian). |
 
 First time only: `npx playwright install chromium`.
 
-**Signed-in tests** are skipped unless you provide a *test* account that exists on your **dev** Supabase project:
+### What is covered
 
-```powershell
-$env:E2E_EMAIL="test@example.com"; $env:E2E_PASSWORD="your-test-password"; npm run test:e2e
+| Area | Tests |
+| --- | --- |
+| Costs and income (`costs.spec.ts`) | add, edit, change category, filter by category, delete with confirmation, income, search, validation messages |
+| Categories (`categories.spec.ts`) | starter categories, add, duplicate error, locked while in use, monthly budget |
+| User journeys (`journeys.spec.ts`) | sign in, log a cost, watch the Overview total move, recategorise, delete, sign out; Bosnian add-cost flow; month navigation |
+| Accessibility (`ux-a11y.spec.ts`) | axe-core WCAG 2.1 A/AA on every page and on the Add sheet; fails on serious/critical issues |
+| Layout (`ux-layout.spec.ts`) | no sideways scrolling at 320/390/768/1280 px in both languages; 44 px touch targets on phone; no console errors; visible keyboard focus; no layout shift |
+| Speed (`ux-perf.spec.ts`) | largest content under 4 s and no oversized images (production build in CI only) |
+| Appearance (`ux-screens.spec.ts`) | screenshots of every page, EN and BS, desktop and phone, attached to the report for you to look through |
+
+### Signed-in tests
+
+They need a *test* account that exists on your **dev** Supabase project, and `.env.local` pointing at that dev project:
+
+```bash
+E2E_EMAIL='test@example.com' E2E_PASSWORD='your-test-password' npm run test:e2e
 ```
 
-To test a deployed site instead of a local one: `$env:E2E_BASE_URL="https://your-preview.vercel.app"; npm run test:e2e`.
+Without those two values the signed-in tests are skipped. The session is saved once (`playwright/.auth/`, ignored by git) and reused, so Supabase's sign-in rate limit is not hit. Every cost or category a test creates is named `E2E-...` and removed afterwards; leftovers from a crashed run are swept at the start of the next one. The tests assume the starter categories (Groceries, Transport, ...) still exist for that account.
 
-**CI:** `.github/workflows/ci.yml` runs lint, types, unit tests, build and the E2E tests on every push and pull request. Results appear under the repo's **Actions** tab.
+To test a deployed site instead of a local one: `E2E_BASE_URL=https://your-preview.vercel.app npm run test:e2e`.
+
+### CI
+
+`.github/workflows/ci.yml` runs lint, types, unit tests, build and the E2E tests on every push and pull request (Actions tab). To also run the signed-in tests there, add these repository secrets: `DEV_SUPABASE_URL`, `DEV_SUPABASE_ANON_KEY`, `DEV_SUPABASE_SERVICE_ROLE_KEY`, `E2E_EMAIL`, `E2E_PASSWORD`. The report with screenshots is attached to every run.

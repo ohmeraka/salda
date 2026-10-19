@@ -88,7 +88,7 @@ export function WelcomeForm() {
           >
             <ProviderIcon provider={provider} />
             {provider}
-            <span className="tag tag-neutral max-[480px]:hidden" style={{ marginLeft: "auto" }}>
+            <span className="tag tag-neutral provider-soon" style={{ marginLeft: "auto" }}>
               {t("common.soon")}
             </span>
           </button>

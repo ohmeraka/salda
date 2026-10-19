@@ -1,0 +1,8 @@
+{
+  // Type-checks the test code. Kept separate so a mistake in a test can never break `next build`
+  // (and therefore the Vercel deploy), while `npm run typecheck` still covers it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false, "plugins": [] },
+  "include": ["next-env.d.ts", "tests/**/*.ts", "playwright.config.ts", "vitest.config.mts"],
+  "exclude": ["node_modules"]
+}
