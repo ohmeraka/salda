@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -11,11 +12,24 @@ import { defineConfig, devices } from "@playwright/test";
  * The signed-out tests need no real Supabase project. The signed-in tests run
  * only when E2E_EMAIL and E2E_PASSWORD are set (use a TEST account on your
  * DEV Supabase project, never your real data).
+ *
+ * Supabase settings: if a .env.local file exists, the app uses it (point it at
+ * your DEV project). If not (e.g. on GitHub), harmless placeholders are used so
+ * the app can start; signed-out requests never reach the network.
  */
 const externalUrl = process.env.E2E_BASE_URL;
 const port = 3100;
 const baseURL = externalUrl ?? `http://localhost:${port}`;
 const isCI = !!process.env.CI;
+const hasEnvFile = existsSync(".env.local");
+
+const placeholderEnv = hasEnvFile
+  ? {}
+  : {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key",
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder-service-key",
+    };
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -42,12 +56,6 @@ export default defineConfig({
         url: `${baseURL}/welcome`,
         reuseExistingServer: !isCI,
         timeout: 240_000,
-        env: {
-          // Placeholders so the app boots without a real project; a signed-out
-          // request never reaches the network. Real values from the environment win.
-          NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key",
-          SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder-service-key",
-        },
+        env: placeholderEnv,
       },
 });

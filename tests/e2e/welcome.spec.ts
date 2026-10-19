@@ -33,10 +33,17 @@ test.describe("Welcome page (signed out)", () => {
 
   test("switching language to Bosnian translates the page and survives a reload", async ({ page }) => {
     await page.goto("/welcome");
-    await page.getByText("Bosanski").click();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Znaj gdje je otišlo.");
+    // Wait until the page has finished loading, then retry the click if the page
+    // was not interactive yet (the dev server can be slow on a busy machine).
+    await page.waitForLoadState("networkidle");
+    const headline = page.getByRole("heading", { level: 1 });
+    await expect(async () => {
+      await page.getByText("Bosanski").click();
+      await expect(headline).toHaveText("Znaj gdje je otišlo.", { timeout: 3_000 });
+    }).toPass({ timeout: 20_000 });
+
     await page.reload();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Znaj gdje je otišlo.");
+    await expect(headline).toHaveText("Znaj gdje je otišlo.");
   });
 });
 

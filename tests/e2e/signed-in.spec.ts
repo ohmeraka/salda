@@ -18,6 +18,10 @@ test.describe("Signed in", () => {
     await expect(page).toHaveURL(/\/overview/, { timeout: 20_000 });
     await expect(page.getByText("Balance", { exact: true })).toBeVisible();
 
+    // In `next dev` a small "N" button sits bottom-left and can cover the phone's
+    // bottom navigation. It doesn't exist for real users, so hide it while testing.
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+
     for (const [label, path] of [
       ["Activity", /\/activity/],
       ["Summary", /\/summary/],
